@@ -11,7 +11,7 @@
       "registryDependencies": ["button"],
       "files": [
         {
-          "path": "registry/hello-world/hello-world.tsx",
+          "path": "registry/new-york/hello-world/hello-world.tsx",
           "type": "registry:component"
         }
       ]
@@ -25,7 +25,7 @@
       "registryDependencies": ["button", "input", "label", "textarea", "card"],
       "files": [
         {
-          "path": "registry/example-form/example-form.tsx",
+          "path": "registry/new-york/example-form/example-form.tsx",
           "type": "registry:component"
         }
       ]
@@ -38,24 +38,24 @@
       "registryDependencies": ["card"],
       "files": [
         {
-          "path": "registry/complex-component/page.tsx",
+          "path": "registry/new-york/complex-component/page.tsx",
           "type": "registry:page",
           "target": "app/pokemon/page.tsx"
         },
         {
-          "path": "registry/complex-component/components/pokemon-card.tsx",
+          "path": "registry/new-york/complex-component/components/pokemon-card.tsx",
           "type": "registry:component"
         },
         {
-          "path": "registry/complex-component/components/pokemon-image.tsx",
+          "path": "registry/new-york/complex-component/components/pokemon-image.tsx",
           "type": "registry:component"
         },
         {
-          "path": "registry/complex-component/lib/pokemon.ts",
+          "path": "registry/new-york/complex-component/lib/pokemon.ts",
           "type": "registry:lib"
         },
         {
-          "path": "registry/complex-component/hooks/use-pokemon.ts",
+          "path": "registry/new-york/complex-component/hooks/use-pokemon.ts",
           "type": "registry:hook"
         }
       ]

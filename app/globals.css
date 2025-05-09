@@ -1,4 +1,4 @@
-@tailwind base;
+/* @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
@@ -133,4 +133,146 @@
 
 [data-rehype-pretty-code-title] + pre {
   @apply mt-2;
+} */
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* app/globals.css */
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    /* 主色 - 樱花粉 */
+    --primary: 340 89% 72%; /* 高饱和樱花粉 */
+    --primary-foreground: 0 0% 100%; /* 白色文字 */
+    
+    /* 辅助色 - 淡紫色 */
+    --secondary: 270 80% 94%; /* 柔和的淡紫色 */
+    --secondary-foreground: 270 60% 30%; /* 深紫色文字 */
+    
+    /* 基础色 */
+    --background: 0 0% 100%; /* 纯白背景 */
+    --foreground: 340 10% 20%; /* 粉灰色文字 */
+    
+    /* 卡片色 */
+    --card: 0 0% 100%;
+    --card-foreground: 340 10% 20%;
+    
+    /* 弹出层 */
+    --popover: 0 0% 100%;
+    --popover-foreground: 340 10% 20%;
+    
+    /* 其他颜色 */
+    --muted: 270 15% 96%;
+    --muted-foreground: 270 10% 45%;
+    --accent: 340 85% 78%; /* 强调色（稍亮的樱花粉） */
+    --accent-foreground: 0 0% 100%;
+    --destructive: 340 84% 60%;
+    --destructive-foreground: 0 0% 100%;
+    --border: 270 20% 89%; /* 淡紫色边框 */
+    --input: 270 20% 95%;
+    --ring: 340 80% 72%; /* 樱花粉色光晕 */
+    
+    /* 图表配色 */
+    --chart-1: 340 89% 72%; /* 主樱花粉 */
+    --chart-2: 270 80% 80%; /* 淡紫色 */
+    --chart-3: 330 70% 75%; /* 粉紫色 */
+    --chart-4: 310 65% 78%; /* 紫粉色 */
+    --chart-5: 290 60% 82%; /* 浅紫色 */
+    
+    /* 侧边栏配色 */
+    --sidebar-background: 0 0% 98%;
+    --sidebar-foreground: 340 10% 25%;
+    --sidebar-primary: 340 89% 72%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 270 80% 94%;
+    --sidebar-accent-foreground: 270 60% 30%;
+    --sidebar-border: 270 20% 89%;
+
+    --radius: 0.75rem; /* 圆角半径 */
+  }
+
+  .dark {
+    /* 深色模式配色 */
+    --primary: 340 75% 75%; /* 夜光樱花粉 */
+    --secondary: 270 30% 25%; /* 深紫色 */
+    --background: 340 15% 8%; /* 深粉灰背景 */
+    --foreground: 270 80% 95%; /* 淡紫色文字 */
+    --card: 340 15% 10%;
+    --border: 270 15% 30%;
+    --input: 270 15% 20%;
+    --ring: 340 70% 70%;
+    
+    /* 图表深色模式 */
+    --chart-1: 340 75% 75%;
+    --chart-2: 270 70% 65%;
+    --chart-3: 330 65% 70%;
+    --chart-4: 310 60% 72%;
+    --chart-5: 290 55% 75%;
+    
+    /* 侧边栏深色 */
+    --sidebar-background: 340 15% 10%;
+    --sidebar-foreground: 270 80% 95%;
+    --sidebar-accent: 270 30% 25%;
+
+    --radius:0.75rem;
+  }
+
+  /* 代码块配色调整 */
+  [data-rehype-pretty-code-fragment] .line--highlighted {
+    @apply bg-pink-500/20; /* 樱花粉高亮 */
+  }
+  
+  [data-rehype-pretty-code-fragment] .word--highlighted {
+    @apply bg-purple-200/40 border-purple-300/30; /* 淡紫色高亮 */
+  }
+
+  .dark [data-rehype-pretty-code-fragment] .word--highlighted {
+    @apply bg-purple-800/40 border-purple-600/50;
+  }
+}
+
+/* 其他全局样式保持不变... */
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground;
+    font-feature-settings: "rlig" 1, "calt" 1;
+  }
+}
+
+/* 代码块樱花特效 */
+[data-rehype-pretty-code-fragment] {
+  @apply relative;
+}
+
+.dark [data-rehype-pretty-code-fragment] {
+  @apply text-gray-200;
+}
+
+[data-rehype-pretty-code-fragment] code {
+  @apply grid min-w-full break-words rounded-lg border border-border bg-card p-4;
+  box-shadow: 0 2px 4px rgba(340, 60%, 70%, 0.1); /* 粉色投影 */
+}
+
+[data-rehype-pretty-code-fragment] .line--highlighted {
+  @apply bg-pink-400/20;
+}
+
+.dark [data-rehype-pretty-code-fragment] .line--highlighted {
+  @apply bg-pink-500/30;
+}
+
+[data-rehype-pretty-code-fragment] .word--highlighted {
+  @apply rounded-md bg-pink-400/30 border-pink-300/50 p-1;
+}
+
+.dark [data-rehype-pretty-code-fragment] .word--highlighted {
+  @apply bg-pink-600/40 border-pink-500/60;
 }

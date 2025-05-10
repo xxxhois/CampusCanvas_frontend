@@ -3,17 +3,10 @@ import { devtools, persist } from 'zustand/middleware';
 import { apiClient } from '@/lib/api-client';
 import { http } from '@/lib/fetch';
 import { immer } from 'zustand/middleware/immer';
-import { LoginResponse } from '@/types/auth';
+import { LoginResponse, User } from '@/types/auth';
+import { useToast } from '@/hooks/use-toast';
 
-interface User {
-  id: number; // 修改为 number 类型
-  username: string;
-  email: string;
-  followingIds: number[]; // 数组元素类型改为 number
-  followerIds: number[];
-  avatar: string;
-  bio: string;
-}
+
 
 interface AuthState {
   token: string | null;
@@ -36,12 +29,62 @@ export const useUserStore = create<AuthState & UserActions>()(
         token: null,
         currentUser: null,
 
-        register: async (credentials:any) => {
+        register: async (credentials: RegisterRequest) => {
           try {
-            return await http.
-              post('/api/register', {
-                data: credentials
-              });
+            // 无感唯一性校验 - 用户名
+            const usernameCheck = await apiClient<{ code: number; message: string; data: boolean }>({
+              url: '/users/check/username',
+              method: 'POST',
+              data: { username: credentials.username },
+              responseHandler: {
+                onResponse: async (response) => {
+                  const data = await response.json();
+                  if (data.code !== 200) {
+                    throw new Error(data.message || '用户名校验失败');
+                  }
+                  return data;
+                }
+              }
+            });
+            if (!usernameCheck.data) {
+              throw new Error('用户名已被占用');
+            }
+
+            // 无感唯一性校验 - 邮箱
+            const emailCheck = await apiClient<{ code: number; message: string; data: boolean }>({
+              url: '/users/check/email',
+              method: 'POST',
+              data: { email: credentials.email },
+              responseHandler: {
+                onResponse: async (response) => {
+                  const data = await response.json();
+                  if (data.code !== 200) {
+                    throw new Error(data.message || '邮箱校验失败');
+                  }
+                  return data;
+                }
+              }
+            });
+            if (!emailCheck.data) {
+              throw new Error('邮箱已被占用');
+            }
+
+            // 注册请求
+            const res = await apiClient<RegisterResponse>({
+              url: '/users',
+              method: 'POST',
+              data: credentials,
+              responseHandler: {
+                onResponse: async (response) => {
+                  const data = await response.json();
+                  if (data.code !== 200) {
+                    throw new Error(data.message || '注册失败');
+                  }
+                  return data;
+                }
+              }
+            });
+            return res;
           } catch (error) {
             console.error('注册失败:', error);
             throw error;
@@ -124,33 +167,6 @@ export const useUserStore = create<AuthState & UserActions>()(
             }
           });
         }
-        // logout() {
-        //   set({ token: null, currentUser: null });
-        // },
-
-        // updateProfile(update: any) {
-        //   set((state: { currentUser: any; }) => {
-        //     if (state.currentUser) {
-        //       Object.assign(state.currentUser, update);
-        //     }
-        //   });
-        // },
-
-        // followUser(userId: any) {
-        //   set((state: { currentUser: { followingIds: any[]; }; }) => {
-        //     if (state.currentUser && !state.currentUser.followingIds.includes(userId)) {
-        //       state.currentUser.followingIds.push(userId);
-        //     }
-        //   });
-        // },
-
-        // unfollowUser(userId: any) {
-        //   set((state: { currentUser: { followingIds: any[]; }; }) => {
-        //     if (state.currentUser) {
-        //       state.currentUser.followingIds = state.currentUser.followingIds.filter((id: any) => id !== userId);
-        //     }
-        //   });
-        // }
       })),
       {
         name: 'user-storage', // 本地存储的key

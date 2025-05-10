@@ -6,8 +6,6 @@ import { immer } from 'zustand/middleware/immer';
 import { LoginResponse, User } from '@/types/auth';
 import { useToast } from '@/hooks/use-toast';
 
-
-
 interface AuthState {
   token: string | null;
   currentUser: User | null;
@@ -35,95 +33,52 @@ export const useUserStore = create<AuthState & UserActions>()(
             const usernameCheck = await apiClient<{ code: number; message: string; data: boolean }>({
               url: '/users/check/username',
               method: 'POST',
-              data: { username: credentials.username },
-              responseHandler: {
-                onResponse: async (response) => {
-                  const data = await response.json();
-                  if (data.code !== 200) {
-                    throw new Error(data.message || '用户名校验失败');
-                  }
-                  return data;
-                }
-              }
+              data: { username: credentials.username }
             });
-            if (!usernameCheck.data) {
-              throw new Error('用户名已被占用');
-            }
+            // if (!usernameCheck.data) {
+            //   throw new Error('用户名已被占用');
+            // }
 
             // 无感唯一性校验 - 邮箱
             const emailCheck = await apiClient<{ code: number; message: string; data: boolean }>({
               url: '/users/check/email',
               method: 'POST',
-              data: { email: credentials.email },
-              responseHandler: {
-                onResponse: async (response) => {
-                  const data = await response.json();
-                  if (data.code !== 200) {
-                    throw new Error(data.message || '邮箱校验失败');
-                  }
-                  return data;
-                }
-              }
+              data: { email: credentials.email }
             });
-            if (!emailCheck.data) {
-              throw new Error('邮箱已被占用');
-            }
+            // if (!emailCheck.data) {
+            //   throw new Error('邮箱已被占用');
+            // }
 
             // 注册请求
             const res = await apiClient<RegisterResponse>({
               url: '/users',
               method: 'POST',
-              data: credentials,
-              responseHandler: {
-                onResponse: async (response) => {
-                  const data = await response.json();
-                  if (data.code !== 200) {
-                    throw new Error(data.message || '注册失败');
-                  }
-                  return data;
-                }
-              }
+              data: credentials
             });
+
             return res;
           } catch (error) {
-            console.error('注册失败:', error);
-            throw error;
+            throw error;  // 直接抛出错误，让调用者处理
           }
         },
 
-        login: async (credentials: { username: string; password: string }) => {
+        login: async (credentials: LoginRequest) => {
           try {
             const response = await apiClient<LoginResponse>({
               url: '/auth/login',
               method: 'POST',
-              data: credentials,
-              responseHandler: {
-                onResponse: async (response) => {
-                  const data = await response.json();
-                  if (data.code !== 200) {
-                    throw new Error(data.message);
-                  }
-                  return data;
-                }
-              }
+              data: credentials
             });
+
             const userResponse = await apiClient<{
               code: number;
               message: string;
               data: User;
             }>({
               url: `/users/${response.data.userId}`,
-              method: 'GET',
-              responseHandler: {
-                onResponse: async (response) => {
-                  const data = await response.json();
-                  if (data.code !== 200) {
-                    throw new Error(data.message);
-                  }
-                  return data;
-                }
-              }
+              method: 'GET'
             });
+
             // 更新 store 中的状态
             set((state) => {
               state.token = response.data.token;
@@ -132,14 +87,7 @@ export const useUserStore = create<AuthState & UserActions>()(
 
             return response;
           } catch (error) {
-            // 使用 toast 显示错误信息
-            const { toast } = useToast();
-            toast({
-              title: "登录失败",
-              description: error instanceof Error ? error.message : "请检查您的登录信息",
-              variant: "destructive",
-            });
-            throw error;
+            throw error;  // 直接抛出错误，让调用者处理
           }
         },
 

@@ -73,7 +73,7 @@ export function LoginForm() {
     } catch (error) {
       toast({
         title: "登录失败",
-        description:"请检查您的登录信息",
+        description: error instanceof Error ? error.message : "请检查您的登录信息",
         variant: "destructive",
       });
     }

@@ -35,7 +35,7 @@ export async function apiClient<T>(config: RequestConfig): Promise<T> {
 
     if (!response.ok) {
       const error = await response.json();
-      throw new Error(error.message || '请求失败');
+      throw new Error(error.message || '请求失败');//如果响应中不存在message，则抛出请求失败
     }
 
     return response.json();

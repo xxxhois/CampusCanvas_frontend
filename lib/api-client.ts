@@ -5,6 +5,11 @@ type RequestConfig = {
   method?: 'GET' | 'POST' | 'PUT' | 'DELETE';
   data?: any;
   headers?: HeadersInit;
+  responseHandler?: {
+    parseJson?: boolean;
+    onResponse?: (response: Response) => Promise<any>;
+    onError?: (error: any) => Promise<any>;
+  };
 };
 
 export async function apiClient<T>(config: RequestConfig): Promise<T> {
@@ -14,19 +19,30 @@ export async function apiClient<T>(config: RequestConfig): Promise<T> {
   const path = config.url.startsWith('/') ? config.url : `/${config.url}`;
   const url = `${baseUrl}${path}`;
   console.log('API URL:', url);
-  const response = await fetch(url, {
-    method: config.method || 'GET',
-    headers: {
-      'Content-Type': 'application/json',
-      ...config.headers,
-    },
-    body: config.data ? JSON.stringify(config.data) : undefined,
-  });
-  // console.log(response)
-  if (!response.ok) {
-    const error = await response.json();
-    throw new Error(error.message || '请求失败');
-  }
+  try {
+    const response = await fetch(url, {
+      method: config.method || 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+        ...config.headers,
+      },
+      body: config.data ? JSON.stringify(config.data) : undefined,
+    });
 
-  return response.json();
+    if (config.responseHandler?.onResponse) {
+      return await config.responseHandler.onResponse(response);
+    }
+
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.message || '请求失败');
+    }
+
+    return response.json();
+  } catch (error) {
+    if (config.responseHandler?.onError) {
+      return await config.responseHandler.onError(error);
+    }
+    throw error;
+  }
 }

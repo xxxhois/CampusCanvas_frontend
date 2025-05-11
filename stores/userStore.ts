@@ -1,7 +1,8 @@
 import { apiClient } from '@/lib/api-client';
 import { LoginRequest, LoginResponse, RegisterRequest, RegisterResponse, User } from '@/types/auth';
+import Cookies from 'js-cookie';
 import { create } from 'zustand';
-import { createJSONStorage, devtools, persist } from 'zustand/middleware';
+import { devtools, persist } from 'zustand/middleware';
 import { immer } from 'zustand/middleware/immer';
 // import { useToast } from '@/hooks/use-toast';
 
@@ -82,6 +83,14 @@ export const useUserStore = create<AuthState & UserActions>()(
             set((state) => {
               state.token = response.data.token;
               state.currentUser = userResponse.data;
+              console.log('更新store中的状态', state.token, state.currentUser)
+            });
+
+            // 设置 cookie
+            Cookies.set('token', response.data.token, {
+              expires: 7, // 7天后过期
+              secure: process.env.NODE_ENV === 'production', // 在生产环境中使用 HTTPS
+              sameSite: 'strict',
             });
 
             return response;
@@ -92,6 +101,8 @@ export const useUserStore = create<AuthState & UserActions>()(
 
         logout: () => {
           set({ token: null, currentUser: null });
+          // 清除 cookie
+          Cookies.remove('token');
         },
         updateProfile: (update: Partial<User>) => {
           set((state: { currentUser: User | null; }) => {
@@ -117,7 +128,7 @@ export const useUserStore = create<AuthState & UserActions>()(
       })),
       {
         name: 'user-storage', // 本地存储的key
-        storage: createJSONStorage(() => localStorage),
+        // storage: createJSONStorage(() => localStorage),
         partialize: (state: { token: any; }) => ({ token: state.token }) // 只持久化token
       }
     )

@@ -5,18 +5,8 @@ import { apiClient } from '@/lib/api-client'
 import { useInfiniteQuery } from '@tanstack/react-query'
 import { useEffect } from 'react'
 import { useInView } from 'react-intersection-observer'
-import { Post } from '@/types/post'
-// interface Post {
-//   id: string;
-//   title: string;
-//   content: string;
-//   // 添加其他必要的字段
-// }
+import { Post, PostResponse, PostRequest } from '@/types/post'
 
-interface PostResponse {
-  data: Post[];
-  nextPage: number | null;
-}
 
 export function PostList() {
   const { ref, inView } = useInView()

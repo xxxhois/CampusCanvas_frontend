@@ -1,10 +1,10 @@
 import internal from "stream"
 
-export interface ApiResponse<T = unknown> {
-    code: number
-    message: string
-    data: T
-  }
+// export interface ApiResponse<T = unknown> {
+//     code: number
+//     message: string
+//     data: T
+//   }
   
   // 用户实体类型
 export interface User {

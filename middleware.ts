@@ -7,11 +7,12 @@ export async function middleware(request: NextRequest) {
     return NextResponse.next()
   }
 
-  // 从 LocalStorage 获取 Token
-  const token = localStorage.getItem('auth_token')
+  // 从 cookies 中获取 token
+  const token = request.cookies.get('token')?.value
   const isValid = await verifyTokenLocally(token)
   
   if (!isValid) {
+    console.log('token无效')
     const loginUrl = new URL('/login', request.url)
     loginUrl.searchParams.set('redirect', request.nextUrl.pathname)
     loginUrl.searchParams.set('unauthorization', 'true')
@@ -21,7 +22,8 @@ export async function middleware(request: NextRequest) {
   return NextResponse.next()
 }
 
-async function verifyTokenLocally(token: string | null) {
+async function verifyTokenLocally(token: string | undefined) {
+  console.log('token', token)
   if (!token) return false
   // 本地解析和验证JWT
   try {

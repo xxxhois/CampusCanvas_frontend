@@ -1,10 +1,12 @@
-import { getApiBaseUrl } from './config';
 import { useUserStore } from '@/stores/userStore';
+import { getApiBaseUrl } from './config';
+
 type RequestConfig = {
   url: string;
   method?: 'GET' | 'POST' | 'PUT' | 'DELETE';
   data?: any;
   headers?: HeadersInit;
+  credentials?: RequestCredentials;
   responseHandler?: {
     parseJson?: boolean;
     onResponse?: (response: Response) => Promise<any>;
@@ -27,6 +29,7 @@ export async function apiClient<T>(config: RequestConfig): Promise<T> {
         'Authorization': `Bearer ${useUserStore.getState().token}`,
         ...config.headers,
       },
+      credentials: config.credentials,
       body: config.data ? JSON.stringify(config.data) : undefined,
     });
 

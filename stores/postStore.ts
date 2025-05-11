@@ -1,24 +1,12 @@
 import { create } from 'zustand';
 import { devtools } from 'zustand/middleware';
 import { immer } from 'zustand/middleware/immer';
-
+import { Post } from '@/types/post';
 
 interface Comment {
     id: string;
     content: string;
     authorId: string;
-    createdAt: Date;
-  }
-  
-  interface Post {
-    id: string;
-    content: string;
-    images?: string[];
-    authorId: string;
-    tags: string[];
-    likesCount: number;
-    comments: Comment[];
-    savesCount: number;
     createdAt: Date;
   }
   

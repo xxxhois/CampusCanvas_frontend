@@ -9,3 +9,16 @@ export interface Post {
     createdTime: string;//ISO 8601 格式的字符串形如2025-05-08T12:54:03
     viewCount: number;
 }
+export interface PostRequest {
+    page: number;
+    pageSize: number;
+}
+//接口待定
+export interface PostResponse {
+    code: number;
+    message: string;
+    data: {
+        posts: Post[];
+        nextPage: number | null;
+    }
+}

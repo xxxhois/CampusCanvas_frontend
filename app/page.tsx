@@ -1,20 +1,10 @@
 // app/page.tsx
-import { Input } from "@/components/ui/input"
-import { Card, CardHeader, CardContent } from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
-import { SearchPosts } from "@/components/client/search-post"
-import { SideBar } from '@/components/client/sidebar';
-import Image from "next/image"
 import { PostList } from "@/components/client/post-list";
-
 
 export default function HomePage() {
   return (
-    <div className="flex min-h-screen">
-      <SideBar />
-      <main className="ml-64 flex-1 p-6">
-        <PostList />
-      </main>
+    <div className="p-6">
+      <PostList />
     </div>
   )
 }

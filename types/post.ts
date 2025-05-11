@@ -19,15 +19,6 @@ export interface PostResponse{
     code: number;
     message: string;
     data: {
-        list: Post[];
-        hasNextPage: boolean;
-        nextPage: number;
-    }
-}
-export interface UserPostResponse{
-    code: number;
-    message: string;
-    data: {
         total: number;
         list: Post[];
         pageNum: number;

@@ -1,9 +1,11 @@
 // app/page.tsx
 import { PostList } from "@/components/client/post-list";
+import { SearchPosts } from "@/components/client/search-post";
 
 export default function HomePage() {
   return (
     <div className="p-6">
+      <SearchPosts />
       <PostList />
     </div>
   )

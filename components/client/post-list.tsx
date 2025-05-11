@@ -1,11 +1,12 @@
 // components/PostList.tsx
 'use client'
 
+import { PostCard } from '@/components/ui/postcard'
 import { apiClient } from '@/lib/api-client'
+import { Post, PostResponse } from '@/types/post'
 import { useInfiniteQuery } from '@tanstack/react-query'
 import { useEffect } from 'react'
 import { useInView } from 'react-intersection-observer'
-import { Post, PostResponse, PostRequest } from '@/types/post'
 
 
 export function PostList() {
@@ -40,10 +41,7 @@ export function PostList() {
       {/* 瀑布流渲染 */}
       {data?.pages.map(page => 
         page.data.map((post: Post) => (
-          <div key={post.id} className="post-card">
-            <h3>{post.title}</h3>
-            <p>{post.content}</p>
-          </div>
+          <PostCard post={post}/>
         ))
       )}
       

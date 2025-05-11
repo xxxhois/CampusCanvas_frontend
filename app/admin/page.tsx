@@ -1,5 +1,5 @@
 // app/protected/page.tsx
-'use client'
+'use client'//如果之后组件比较复杂的话可以放在组件中
 
 import { withAuth } from '@/components/client/auth/with-auth'
 

@@ -7,8 +7,8 @@ export async function middleware(request: NextRequest) {
     return NextResponse.next()
   }
 
-  // 从 Cookie 获取 Token
-  const token = request.cookies.get('auth_token')?.value
+  // 从 LocalStorage 获取 Token
+  const token = localStorage.getItem('auth_token')
   const isValid = await verifyTokenLocally(token)
   
   if (!isValid) {
@@ -21,9 +21,24 @@ export async function middleware(request: NextRequest) {
   return NextResponse.next()
 }
 
-async function verifyTokenLocally(token?: string) {
+async function verifyTokenLocally(token: string | null) {
   if (!token) return false
-  return true
+  // 本地解析和验证JWT
+  try {
+    // JWT格式: header.payload.signature
+    const parts = token.split('.')
+    if (parts.length !== 3) return false
+
+    const payload = JSON.parse(atob(parts[1]))
+    // 检查exp字段（过期时间，单位为秒）
+    if (payload.exp && Date.now() / 1000 > payload.exp) {
+      return false
+    }
+    // 你可以根据需要增加更多payload字段的校验
+    return true
+  } catch (e) {
+    return false
+  }
 }
 
 export const config = {

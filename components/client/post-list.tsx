@@ -1,10 +1,22 @@
 // components/PostList.tsx
 'use client'
 
+import { apiClient } from '@/lib/api-client'
 import { useInfiniteQuery } from '@tanstack/react-query'
-import axios from 'axios'
 import { useEffect } from 'react'
 import { useInView } from 'react-intersection-observer'
+import { Post } from '@/types/post'
+// interface Post {
+//   id: string;
+//   title: string;
+//   content: string;
+//   // 添加其他必要的字段
+// }
+
+interface PostResponse {
+  data: Post[];
+  nextPage: number | null;
+}
 
 export function PostList() {
   const { ref, inView } = useInView()
@@ -17,8 +29,11 @@ export function PostList() {
   } = useInfiniteQuery({
     queryKey: ['posts'],
     queryFn: async ({ pageParam = 1 }) => {
-      const res = await axios.get(`/api/posts?page=${pageParam}`)
-      return res.data
+      const response = await apiClient<PostResponse>({
+        url: `/api/posts?page=${pageParam}`,
+        method: 'GET'
+      })
+      return response
     },
     getNextPageParam: (lastPage) => lastPage.nextPage,
     initialPageParam: 1
@@ -35,7 +50,10 @@ export function PostList() {
       {/* 瀑布流渲染 */}
       {data?.pages.map(page => 
         page.data.map((post: Post) => (
-          <PostCard key={post.id} post={post} />
+          <div key={post.id} className="post-card">
+            <h3>{post.title}</h3>
+            <p>{post.content}</p>
+          </div>
         ))
       )}
       

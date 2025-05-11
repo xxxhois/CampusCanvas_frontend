@@ -3,6 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
+    "mock": "cross-env NEXT_PUBLIC_MODE=mock next dev",
     "dev": "cross-env NEXT_PUBLIC_MODE=development next dev",
     "build:dev": "cross-env NEXT_PUBLIC_MODE=development next build",
     "build:stage": "cross-env NEXT_PUBLIC_MODE=staging next build",

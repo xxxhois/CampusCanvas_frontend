@@ -7,7 +7,7 @@ export interface ApiResponse<T = unknown> {
   }
   
   // 用户实体类型
-interface User {
+export interface User {
   id: number;
   username: string;
   email: string;
@@ -27,6 +27,7 @@ export interface LoginResponse {
     code: number
     message: string
     data: {
+      userId: number
       token: string
     }
   }

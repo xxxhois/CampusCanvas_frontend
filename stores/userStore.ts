@@ -1,10 +1,9 @@
-import { create } from 'zustand';
-import { devtools, persist } from 'zustand/middleware';
 import { apiClient } from '@/lib/api-client';
-import { http } from '@/lib/fetch';
+import { LoginRequest, LoginResponse, RegisterRequest, RegisterResponse, User } from '@/types/auth';
+import { create } from 'zustand';
+import { createJSONStorage, devtools, persist } from 'zustand/middleware';
 import { immer } from 'zustand/middleware/immer';
-import { LoginResponse, User } from '@/types/auth';
-import { useToast } from '@/hooks/use-toast';
+// import { useToast } from '@/hooks/use-toast';
 
 interface AuthState {
   token: string | null;
@@ -12,8 +11,8 @@ interface AuthState {
 }
 
 interface UserActions {
-  register: (user: { username: string; email: string; password: string, code: string }) => Promise<void>;
-  login: (credentials: { username: string; password: string }) => Promise<void>;
+  register: (user: { username: string; email: string; password: string, code: string }) => Promise<RegisterResponse>;
+  login: (credentials: { username: string; password: string }) => Promise<LoginResponse>;
   logout: () => void;
   updateProfile: (update: Partial<User>) => void;
   followUser: (userId: number) => void;
@@ -118,6 +117,7 @@ export const useUserStore = create<AuthState & UserActions>()(
       })),
       {
         name: 'user-storage', // 本地存储的key
+        storage: createJSONStorage(() => localStorage),
         partialize: (state: { token: any; }) => ({ token: state.token }) // 只持久化token
       }
     )

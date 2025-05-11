@@ -2,15 +2,13 @@
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { zodResolver } from '@hookform/resolvers/zod'
-import { useForm } from 'react-hook-form'
-import { useSearchParams } from 'next/navigation'
-import { useEffect } from 'react'
 import { useToast } from '@/hooks/use-toast'
 import { useUserStore } from "@/stores/userStore"
+import { zodResolver } from '@hookform/resolvers/zod'
 import Link from 'next/link'
-import { useRouter } from 'next/navigation'
-import { useState } from 'react'
+import { useRouter, useSearchParams } from 'next/navigation'
+import { useEffect } from 'react'
+import { useForm } from 'react-hook-form'
 import * as z from 'zod'
 
 const formSchema = z.object({
@@ -68,7 +66,7 @@ export function LoginForm() {
         }
       )
       // 登录成功后跳转回原页面或首页
-      const redirectTo = searchParams.get("redirect") || "/";
+      const redirectTo = searchParams.get("redirect") || "/";//redirect参数不需要手动删除，下次跳转前重新设置
       navigate.push(redirectTo);
     } catch (error) {
       toast({

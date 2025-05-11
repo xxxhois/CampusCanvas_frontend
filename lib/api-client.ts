@@ -1,5 +1,5 @@
 import { getApiBaseUrl } from './config';
-
+import { useUserStore } from '@/stores/userStore';
 type RequestConfig = {
   url: string;
   method?: 'GET' | 'POST' | 'PUT' | 'DELETE';
@@ -24,6 +24,7 @@ export async function apiClient<T>(config: RequestConfig): Promise<T> {
       method: config.method || 'GET',
       headers: {
         'Content-Type': 'application/json',
+        'Authorization': `Bearer ${useUserStore.getState().token}`,
         ...config.headers,
       },
       body: config.data ? JSON.stringify(config.data) : undefined,

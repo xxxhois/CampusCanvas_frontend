@@ -2,6 +2,8 @@
 export interface Post {
     postId: number;
     userId: number;
+    userName: string;
+    userAvatar: string;
     title: string;
     content: string;
     imageUrls: string[];
@@ -13,12 +15,36 @@ export interface PostRequest {
     page: number;
     pageSize: number;
 }
-//接口待定
-export interface PostResponse {
+export interface PostResponse{
     code: number;
     message: string;
     data: {
-        posts: Post[];
-        nextPage: number | null;
+        list: Post[];
+        hasNextPage: boolean;
+        nextPage: number;
+    }
+}
+export interface UserPostResponse{
+    code: number;
+    message: string;
+    data: {
+        total: number;
+        list: Post[];
+        pageNum: number;
+        pageSize: number;
+        size: number;
+        startRow: number;
+        endRow:number;
+        pages: number;
+        prePage: number;
+        nextPage: number;
+        isFirstPage: boolean;
+        isLastPage: boolean;
+        hasPreviousPage: boolean;
+        hasNextPage: boolean;
+        navigatePages: number;
+        navigatepageNums: number[];
+        navigateFirstPage: number;
+        navigateLastPage: number;
     }
 }

@@ -1,32 +1,16 @@
-import { Card, CardHeader, CardContent, CardFooter } from "@/components/ui/card";
-import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
-import { Button } from "@/components/ui/button";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
-import { Heart, Bookmark, MessageCircle } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card";
+import { Post } from "@/types/post";
+import { Bookmark, Eye, Heart, MessageCircle } from "lucide-react";
 import Image from "next/image";
-
-type Post = {
-  id: number | string;
-  user: {
-    name: string;
-    avatar: string;
-  };
-  image: string;
-  title: string;
-  tags?: string[];
-  likes: number;
-  collected: number;
-  comments: number;
-  isLiked?: boolean;
-  isCollected?: boolean;
-  time?: string;
-};
 
 interface PostCardProps {
   post: Post;
-  onLike?: (id: Post["id"]) => void;
-  onCollect?: (id: Post["id"]) => void;
-  onComment?: (id: Post["id"]) => void;
+  onLike?: (postId: number) => void;
+  onCollect?: (postId: number) => void;
+  onComment?: (postId: number) => void;
 }
 
 export function PostCard({ post, onLike, onCollect, onComment }: PostCardProps) {
@@ -34,16 +18,16 @@ export function PostCard({ post, onLike, onCollect, onComment }: PostCardProps) 
     <Card className="rounded-2xl overflow-hidden shadow-md bg-white hover:shadow-lg transition-shadow duration-200">
       <CardHeader className="flex flex-row items-center gap-3 pb-2">
         <Avatar className="w-9 h-9">
-          <AvatarImage src={post.user.avatar} />
+          <AvatarImage src={post.userAvatar} />
           <AvatarFallback>
-            {post.user.name?.[0] || "U"}
+            {post.userName?.[0] || "U"}
           </AvatarFallback>
         </Avatar>
         <div className="flex-1">
-          <div className="font-semibold text-sm">{post.user.name}</div>
-          {post.time && (
-            <div className="text-xs text-gray-400">{post.time}</div>
-          )}
+          <div className="font-semibold text-sm">{post.userName}</div>
+          <div className="text-xs text-gray-400">
+            {new Date(post.createdTime).toLocaleDateString()}
+          </div>
         </div>
         <Button variant="outline" size="sm" className="rounded-full px-3 py-1 text-xs">
           关注
@@ -52,7 +36,7 @@ export function PostCard({ post, onLike, onCollect, onComment }: PostCardProps) 
       <CardContent className="p-0">
         <div className="relative w-full aspect-[4/5] bg-gray-100">
           <Image
-            src={post.image}
+            src={post.imageUrls[0] || '/default-image.png'}
             alt={post.title}
             fill
             className="object-cover"
@@ -62,10 +46,11 @@ export function PostCard({ post, onLike, onCollect, onComment }: PostCardProps) 
         </div>
         <div className="p-3">
           <div className="font-medium text-base truncate mb-1">{post.title}</div>
+          <div className="text-sm text-gray-600 line-clamp-2 mb-2">{post.content}</div>
           <div className="flex flex-wrap gap-1 mb-2">
-            {post.tags?.map((tag) => (
-              <Badge key={tag} variant="secondary" className="rounded-full px-2 py-0.5 text-xs">
-                #{tag}
+            {post.tagIds.map((tagId) => (
+              <Badge key={tagId} variant="secondary" className="rounded-full px-2 py-0.5 text-xs">
+                #{tagId}
               </Badge>
             ))}
           </div>
@@ -76,30 +61,31 @@ export function PostCard({ post, onLike, onCollect, onComment }: PostCardProps) 
           <Button
             variant="ghost"
             size="icon"
-            className={`hover:bg-pink-100 ${post.isLiked ? "text-pink-500" : "text-gray-500"}`}
-            onClick={() => onLike?.(post.id)}
+            className="text-gray-500 hover:bg-pink-100"
+            onClick={() => onLike?.(post.postId)}
           >
-            <Heart fill={post.isLiked ? "#ec4899" : "none"} className="w-5 h-5" />
+            <Heart className="w-5 h-5" />
           </Button>
-          <span className="text-xs text-gray-600">{post.likes}</span>
           <Button
             variant="ghost"
             size="icon"
-            className={`hover:bg-yellow-100 ${post.isCollected ? "text-yellow-500" : "text-gray-500"}`}
-            onClick={() => onCollect?.(post.id)}
+            className="text-gray-500 hover:bg-yellow-100"
+            onClick={() => onCollect?.(post.postId)}
           >
-            <Bookmark fill={post.isCollected ? "#facc15" : "none"} className="w-5 h-5" />
+            <Bookmark className="w-5 h-5" />
           </Button>
-          <span className="text-xs text-gray-600">{post.collected}</span>
           <Button
             variant="ghost"
             size="icon"
             className="text-gray-500 hover:bg-gray-100"
-            onClick={() => onComment?.(post.id)}
+            onClick={() => onComment?.(post.postId)}
           >
             <MessageCircle className="w-5 h-5" />
           </Button>
-          <span className="text-xs text-gray-600">{post.comments}</span>
+          <div className="flex items-center gap-1 text-xs text-gray-600">
+            <Eye className="w-4 h-4" />
+            <span>{post.viewCount}</span>
+          </div>
         </div>
       </CardFooter>
     </Card>

@@ -19,11 +19,19 @@ export function PostList() {
   } = useInfiniteQuery({
     queryKey: ['posts'],
     queryFn: async ({ pageParam = 1 }) => {
+      const params = new URLSearchParams({
+        pageNum: pageParam.toString(),
+        pageSize: '10',
+        sortBy: 'view_count',
+        sortOrder: 'asc'
+      });
+      console.log('params', params.toString())
+      const userId = 1
       const response = await apiClient<PostResponse>({
-        url: `/api/posts?page=${pageParam}`,//待改
+        url: `/post/user/${userId}?${params.toString()}`,
         method: 'GET'
-      })
-      return response
+      });
+      return response;
     },
     getNextPageParam: (lastPage) => lastPage.data.hasNextPage ? lastPage.data.nextPage : undefined,
     initialPageParam: 1

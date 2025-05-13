@@ -5,7 +5,7 @@ export const getApiBaseUrl = () => {
 
     switch (process.env.NEXT_PUBLIC_MODE) {
       case 'development':
-        return 'http://100.66.86.59:8080'
+        return 'http://100.66.86.59:8080/campus-canvas/api'
       case 'mock':
         return 'http://127.0.0.1:4523/m1/5986883-0-default'
       case 'production':

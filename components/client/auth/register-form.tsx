@@ -49,17 +49,25 @@ export function RegistryForm() {
       } catch (error) {
         toast({
           title: "注册失败",
-          description:"请检查您的注册信息",
+          description:error instanceof Error ? error.message : "请检查您的注册信息",
           variant: "destructive",
         });
       }
     };
   const SendCode = async () => {
     try {
-      const res = await apiClient({
-        url: '/auth/verification-code/email',
-        method: 'POST',
-        data: { email: form.getValues("email") }
+      const email = form.getValues("email");
+      // if (!email) {
+      //   toast({
+      //     title: "发送失败",
+      //     description: "请先输入邮箱地址",
+      //     variant: "destructive",
+      //   });
+      //   return;
+      // }
+      await apiClient({
+        url: `/auth/verification-code/email?email=${encodeURIComponent(email)}`,
+        method: 'GET',
       });
       toast({
         title: "验证码已发送",
@@ -68,7 +76,7 @@ export function RegistryForm() {
     } catch (error) {
       toast({
         title: "发送失败",
-        description:"请检查您的邮箱",
+        description: error instanceof Error ? error.message : "请检查您的邮箱",
         variant: "destructive",
       });
     }

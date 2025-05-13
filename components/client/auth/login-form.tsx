@@ -20,15 +20,18 @@ export function LoginForm() {
   const { toast } = useToast()
   const navigate = useRouter()
   const searchParams = useSearchParams()
+  const { token } = useUserStore()
+  // const { isUnauthorized, setUnauthorized } = useUserStore()
+  
   useEffect(() => {
-    if (searchParams.get('unauthorization') === 'true') {
+    if (!token) {
       toast({
         title: "访问受限",
         description: "请先登录以继续操作",
         variant: "destructive",
-      })
+      });
     }
-  }, [searchParams, toast])
+  }, [token, toast]);
   
   // 自动填充逻辑
   useEffect(() => {

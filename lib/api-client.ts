@@ -1,6 +1,6 @@
+//import { useToast } from '@/components/ui/use-toast';
 import { useUserStore } from '@/stores/userStore';
 import { getApiBaseUrl } from './config';
-
 type RequestConfig = {
   url: string;
   method?: 'GET' | 'POST' | 'PUT' | 'DELETE';
@@ -37,13 +37,28 @@ export async function apiClient<T>(config: RequestConfig): Promise<T> {
       return await config.responseHandler.onResponse(response);
     }
 
+    // 先检查响应状态
     if (!response.ok) {
-      const error = await response.json();
-      throw new Error(error.message || '请求失败');//如果响应中不存在message，则抛出请求失败
+      throw new Error(`HTTP error! status: ${response.status}`);
     }
 
-    return response.json();
+    // 尝试解析响应体
+    const data = await response.json();
+    console.log('API Response:', data);
+
+    // 检查业务状态码
+    if (data.code && data.code !== 200) {
+      if (data.code === 401) {
+        useUserStore.getState().logout();
+        //window.location.href = '/login';
+        //return data;
+      }
+      throw new Error(data.message || '请求响应失败');
+    }
+
+    return data;
   } catch (error) {
+    console.error('API Error:', error);
     if (config.responseHandler?.onError) {
       return await config.responseHandler.onError(error);
     }

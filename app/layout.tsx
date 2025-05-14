@@ -1,4 +1,5 @@
-import { SideBar } from "@/components/client/sidebar";
+// import { SideBar } from "@/components/client/sidebar";
+import { LayoutWrapper } from "@/components/client/layout-wrapper";
 import { Toaster } from "@/components/ui/toaster";
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
@@ -31,12 +32,9 @@ export default function RootLayout({
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
         <Providers>
-          <div className="flex min-h-screen">
-            <SideBar />
-            <main className="ml-64 flex-1">
-              {children}
-            </main>
-          </div>
+          <LayoutWrapper>
+            {children}
+          </LayoutWrapper>
           <Toaster />
         </Providers>
       </body>

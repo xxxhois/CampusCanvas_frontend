@@ -1,6 +1,38 @@
 //import { useToast } from '@/components/ui/use-toast';
 import { useUserStore } from '@/stores/userStore';
 import { getApiBaseUrl } from './config';
+
+// 从localStorage获取token的辅助函数
+const getTokenFromStorage = () => {
+  try {
+    const storedState = localStorage.getItem('user-storage');
+    if (storedState) {
+      const { state } = JSON.parse(storedState);
+      return state.token;
+    }
+  } catch (error) {
+    console.error('从localStorage获取token失败:', error);
+  }
+  return null;
+};
+
+// 获取token的统一方法
+const getToken = () => {
+  // 首先尝试从store获取
+  const storeToken = useUserStore.getState().token;
+  if (storeToken) return storeToken;
+  
+  // 如果store中没有，尝试从localStorage获取
+  const storageToken = getTokenFromStorage();
+  if (storageToken) {
+    // 如果从localStorage获取到token，同步到store
+    useUserStore.setState({ token: storageToken });
+    return storageToken;
+  }
+  
+  return null;
+};
+
 type RequestConfig = {
   url: string;
   method?: 'GET' | 'POST' | 'PUT' | 'DELETE';
@@ -21,14 +53,36 @@ export async function apiClient<T>(config: RequestConfig): Promise<T> {
   const path = config.url.startsWith('/') ? config.url : `/${config.url}`;
   const url = `${baseUrl}${path}`;
   console.log('API URL:', url);
+
+  // 获取token
+  const token = getToken();
+  
+  // 构建请求头
+  const headers = new Headers();
+  
+  // 设置基础请求头
+  headers.append('Content-Type', 'application/json');
+  
+  // 添加自定义请求头
+  if (config.headers) {
+    Object.entries(config.headers).forEach(([key, value]) => {
+      headers.append(key, value);
+    });
+  }
+
+  // 如果有token，添加到请求头
+  if (token) {
+    // 如果已经存在Authorization头，先删除
+    if (headers.has('Authorization')) {
+      headers.delete('Authorization');
+    }
+    headers.append('Authorization', token)
+  }
+
   try {
     const response = await fetch(url, {
       method: config.method || 'GET',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${useUserStore.getState().token}`,
-        ...config.headers,
-      },
+      headers,
       credentials: config.credentials,
       body: config.data ? JSON.stringify(config.data) : undefined,
     });
@@ -50,7 +104,7 @@ export async function apiClient<T>(config: RequestConfig): Promise<T> {
     if (data.code && data.code !== 200) {
       if (data.code === 401) {
         useUserStore.getState().logout();
-        //window.location.href = '/login';
+        window.location.href = '/login';
         //return data;
       }
       throw new Error(data.message || '请求响应失败');

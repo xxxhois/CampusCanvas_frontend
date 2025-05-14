@@ -3,7 +3,7 @@
 
 import { PostCard } from '@/components/ui/postcard'
 import { apiClient } from '@/lib/api-client'
-import { Post, PostResponse } from '@/types/post'
+import { PostResponse } from '@/types/post'
 import { useInfiniteQuery } from '@tanstack/react-query'
 import { useEffect } from 'react'
 import { useInView } from 'react-intersection-observer'
@@ -47,9 +47,9 @@ export function PostList() {
     <div className="container mx-auto px-4">
       {/* 瀑布流布局 */}
       <div className="columns-1 md:columns-2 lg:columns-3 gap-4 space-y-4">
-        {data?.pages.flatMap(page =>
-          page.data.list.map((post: Post) => (
-            <div key={post.postId} className="break-inside-avoid">
+        {data?.pages.map(page =>
+          page.data.list.map(post => (
+            <div key={`${post.postId}-${page.data.pageNum}`} className="break-inside-avoid">
               <PostCard post={post} />
             </div>
           ))

@@ -1,7 +1,7 @@
 import { apiClient } from '@/lib/api-client';
 import { LoginRequest, LoginResponse, RegisterRequest, RegisterResponse, User } from '@/types/auth';
 import { create } from 'zustand';
-import { devtools, persist } from 'zustand/middleware';
+import { createJSONStorage, devtools, persist } from 'zustand/middleware';
 import { immer } from 'zustand/middleware/immer';
 // import { useToast } from '@/hooks/use-toast';
 
@@ -78,9 +78,31 @@ export const useUserStore = create<AuthState & UserActions>()(
               data: credentials
             });
             console.log('登录响应', response)
+            
+            // 先设置token
             set((state) => {
               state.token = response.data.token;
-            })
+              console.log('设置token', state.token)
+            });
+
+            // 等待token设置完成，最多重试5次
+            let retryCount = 0;
+            const maxRetries = 5;
+            let currentToken = null;
+
+            while (retryCount < maxRetries) {
+              currentToken = useUserStore.getState().token;
+              if (currentToken) break;
+              
+              // 等待一小段时间后重试
+              await new Promise(resolve => setTimeout(resolve, 100));
+              retryCount++;
+            }
+
+            if (!currentToken) {
+              throw new Error('Token设置失败，请重试');
+            }
+
             if (response.code === 200) {
               const userResponse = await apiClient<{
                 code: number;
@@ -93,18 +115,11 @@ export const useUserStore = create<AuthState & UserActions>()(
 
               // 更新 store 中的状态
               set((state) => {
-                //state.token = response.data.token;
                 state.currentUser = userResponse.data;
                 console.log('更新store中的状态', state.token, state.currentUser)
               });
               console.log('获得用户信息', userResponse.data)
             }
-            // 设置 cookie
-            // Cookies.set('token', response.data.token, {
-            //   expires: 7, // 7天后过期
-            //   secure: process.env.NODE_ENV === 'production', // 在生产环境中使用 HTTPS
-            //   sameSite: 'strict',
-            // });
 
             return response;
           } catch (error) {
@@ -141,8 +156,11 @@ export const useUserStore = create<AuthState & UserActions>()(
       })),
       {
         name: 'user-storage', // 本地存储的key
-        // storage: createJSONStorage(() => localStorage),
-        partialize: (state: { token: any; }) => ({ token: state.token }) // 只持久化token
+        storage: createJSONStorage(() => localStorage), // 明确指定使用localStorage
+        partialize: (state) => ({ 
+          token: state.token,
+          currentUser: state.currentUser 
+        }) // 持久化token和用户信息
       }
     )
   )

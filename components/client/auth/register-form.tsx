@@ -36,7 +36,8 @@ export function RegistryForm() {
           username: values.username,
           password: values.password,
           email: values.email,
-          code: values.code
+          code: values.code,
+          avatarUrl: '/default-avatar.jpg'
         });
         toast(
           {

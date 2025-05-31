@@ -1,15 +1,38 @@
-
 export interface Post {
-    postId: number;
+    id: number;
     userId: number;
-    userName: string;
-    userAvatar: string;
+    username: string;
+    avatarUrl: string;
     title: string;
     content: string;
     imageUrls: string[];
-    tagIds: number[];
     createdTime: string;//ISO 8601 格式的字符串形如2025-05-08T12:54:03
     viewCount: number;
+    likeCount: number;
+    isLiked: boolean;
+    isSaved: boolean;
+}
+export interface PostDetail extends Post {
+    comments: Comment[];
+    tags: Tag[]; //标签需要在帖子详情中单独请求，name的数组
+
+}
+export interface PostPage {
+    pages: {
+      data: {
+        list: Post[];
+      };
+    }[];
+  }
+export interface Comment {
+    id: number;
+    userId: number;
+    username: string;
+    avatarUrl: string;
+    postId: number;
+    content: string;
+    createdTime: string;
+    likes: number;
 }
 export interface PostRequest {
     page: number;
@@ -38,4 +61,10 @@ export interface PostResponse{
         navigateFirstPage: number;
         navigateLastPage: number;
     }
+}
+export interface Tag {
+  id: number;
+  name: string;
+  viewCount: number;
+  createdTime: string;
 }

@@ -12,7 +12,7 @@ interface AuthState {
 }
 
 interface UserActions {
-  register: (user: { username: string; email: string; password: string, code: string }) => Promise<RegisterResponse>;
+  register: (user: { username: string; email: string; password: string; code: string; avatarUrl?: string }) => Promise<RegisterResponse>;
   login: (credentials: { username: string; password: string }) => Promise<LoginResponse>;
   logout: () => void;
   //setUnauthorized: (value: boolean) => void;

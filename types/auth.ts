@@ -1,4 +1,3 @@
-
 // export interface ApiResponse<T = unknown> {
 //     code: number
 //     message: string
@@ -35,7 +34,7 @@ export interface LoginResponse {
 export interface RegisterRequest extends LoginRequest {
     email: string
     code: string
-    avatar?: string
+    avatarUrl?: string
     bio?: string
   }
   

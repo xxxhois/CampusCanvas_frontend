@@ -16,7 +16,7 @@ export function PostDetailDialog({ postId, onClose }: PostDetailDialogProps) {
         console.log('Dialog open state changed:', open);
         if (!open) onClose();
       }}>
-      <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="max-w-6xl max-h-[90vh] overflow-y-auto">
         <DialogTitle className="sr-only">帖子详情</DialogTitle>
         {postId ? (
           <PostDetail postId={postId} />

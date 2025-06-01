@@ -59,10 +59,28 @@ export function Editor() {
   }
 
   const handleSubmit = async () => {
-    if (!title || !content) {
+    if (!title.trim()) {
       toast({
         title: "发布失败",
-        description: "标题和内容不能为空",
+        description: "标题不能为空",
+        variant: "destructive",
+      })
+      return
+    }
+
+    if (!content.trim()) {
+      toast({
+        title: "发布失败",
+        description: "内容不能为空",
+        variant: "destructive",
+      })
+      return
+    }
+
+    if (tags.length === 0) {
+      toast({
+        title: "发布失败",
+        description: "请至少添加一个标签",
         variant: "destructive",
       })
       return

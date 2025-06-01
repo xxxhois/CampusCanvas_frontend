@@ -55,7 +55,7 @@ export function CommentSection({ comments, commentContent, setCommentContent, po
               <div className="space-y-6">
                 {comments?.map((comment) => (
                   <div key={comment.id} className="flex gap-3">
-                    <Avatar className="w-8 h-8">
+                    <Avatar className="w-8 h-8 cursor-pointer" onClick={() => window.location.href = `/profile/${comment.userId}`}>
                       <AvatarImage src={comment.avatarUrl} />
                       <AvatarFallback>{comment.username.slice(0, 2).toUpperCase()}</AvatarFallback>
                     </Avatar>

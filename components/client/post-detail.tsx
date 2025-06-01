@@ -246,7 +246,7 @@ export function PostDetail({ postId }: { postId: number }) {
         <div className="h-full overflow-y-auto">
           <div className="max-w-2xl mx-auto p-8 space-y-8">
             {/* 用户信息 */}
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-3 cursor-pointer" onClick={() => window.location.href = `/profile/${post.userId}`}>
               <Avatar className="w-10 h-10">
                 <AvatarImage src={post.avatarUrl} />
                 <AvatarFallback>{post.username.slice(0, 2).toUpperCase()}</AvatarFallback>

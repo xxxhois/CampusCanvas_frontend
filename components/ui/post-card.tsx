@@ -11,22 +11,8 @@ interface PostCardProps {
 export function PostCard({ post }: PostCardProps) {
   const router = useRouter()
   const { currentUser } = useUserStore()
-  const { likePost, unlikePost } = usePostStore()
 
   console.log('Post data:', post)
-
-  const handleLike = (e: React.MouseEvent) => {
-    e.stopPropagation()
-    if (!currentUser) {
-      router.push('/login')
-      return
-    }
-    if (post.isLiked) {
-      unlikePost(post.id)
-    } else {
-      likePost(post.id)
-    }
-  }
 
   return (
     <div className="bg-white rounded-xl shadow-sm hover:shadow-md transition-shadow duration-200">
@@ -96,12 +82,7 @@ export function PostCard({ post }: PostCardProps) {
 
         {/* 互动数据 */}
         <div className="flex items-center gap-4 text-sm text-gray-500 border-t pt-3">
-          <button 
-            onClick={handleLike}
-            className="flex items-center gap-1 hover:text-red-500 transition-colors"
-          >
-            <span className={post.isLiked ? "text-red-500" : ""}>♥ {post.likeCount}</span>
-          </button>
+            <span>♥ {post.likeCount}</span>
         </div>
       </div>
     </div>

@@ -13,6 +13,7 @@ export interface User {
   followerIds: number[];
   avatar?: string;
   bio?: string;
+  isFollowing?: boolean;
 }
   
   // 登录请求/响应

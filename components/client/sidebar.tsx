@@ -3,17 +3,19 @@
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
 import { cn } from "@/lib/utils"
+import { useUserStore } from "@/stores/userStore"
 import { Home, PlusCircle, Settings, User } from "lucide-react"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 
 export function SideBar() {
   const pathname = usePathname()
+  const { currentUser } = useUserStore()
 
   const navItems = [
     { href: '/', icon: Home, label: '首页' },
     { href: '/publish', icon: PlusCircle, label: '发布' },
-    { href: '/profile', icon: User, label: '我的' },
+    { href: currentUser ? `/profile/${currentUser.id}` : '/login', icon: User, label: '我的' },
     { href: '/settings', icon: Settings, label: '设置' },
   ]
 

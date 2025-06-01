@@ -13,12 +13,12 @@ interface AuthState {
 
 interface UserActions {
   register: (user: { username: string; email: string; password: string; code: string; avatarUrl?: string }) => Promise<RegisterResponse>;
-  login: (credentials: { username: string; password: string }) => Promise<LoginResponse>;
+  login: (credentials: LoginRequest) => Promise<boolean>;
   logout: () => void;
   //setUnauthorized: (value: boolean) => void;
   updateProfile: (update: Partial<User>) => void;
-  followUser: (userId: number) => void;
-  unfollowUser: (userId: number) => void;
+  followUser: (userId: number) => Promise<void>;
+  unfollowUser: (userId: number) => Promise<void>;
 }
 
 export const useUserStore = create<AuthState & UserActions>()(
@@ -77,53 +77,36 @@ export const useUserStore = create<AuthState & UserActions>()(
               method: 'POST',
               data: credentials
             });
-            console.log('登录响应', response)
-            
-            // 先设置token
-            set((state) => {
-              state.token = response.data.token;
-              console.log('设置token', state.token)
-            });
-
-            // 等待token设置完成，最多重试5次
-            let retryCount = 0;
-            const maxRetries = 5;
-            let currentToken = null;
-
-            while (retryCount < maxRetries) {
-              currentToken = useUserStore.getState().token;
-              if (currentToken) break;
-              
-              // 等待一小段时间后重试
-              await new Promise(resolve => setTimeout(resolve, 100));
-              retryCount++;
-            }
-
-            if (!currentToken) {
-              throw new Error('Token设置失败，请重试');
-            }
 
             if (response.code === 200) {
+              const { userId, token } = response.data;
+              
+              // 先设置 token
+              set((state) => {
+                state.token = token;
+              });
+              
+              // 获取用户信息
               const userResponse = await apiClient<{
                 code: number;
                 message: string;
                 data: User;
               }>({
-                url: `/users/${response.data.userId}`,
+                url: `/users/${userId}`,
                 method: 'GET'
               });
 
-              // 更新 store 中的状态
+              // 更新用户信息
               set((state) => {
                 state.currentUser = userResponse.data;
                 console.log('更新store中的状态', state.token, state.currentUser)
               });
               console.log('获得用户信息', userResponse.data)
+              return true;
             }
-
-            return response;
+            return false;
           } catch (error) {
-            throw error;  // 直接抛出错误，让调用者处理
+            throw error;
           }
         },
 
@@ -139,19 +122,51 @@ export const useUserStore = create<AuthState & UserActions>()(
             }
           });
         },
-        followUser: (userId: number) => {
-          set((state: AuthState & UserActions) => {
-            if (state.currentUser && !state.currentUser.followingIds.includes(userId)) {
-              state.currentUser.followingIds.push(userId);
-            }
-          });
+        followUser: async (userId: number) => {
+          try {
+            // 调用关注API
+            await apiClient({
+              url: '/follows',
+              method: 'POST',
+              data: {
+                followerId: useUserStore.getState().currentUser?.id,
+                followingId: userId
+              }
+            });
+
+            // 更新本地状态
+            set((state) => {
+              if (state.currentUser && !state.currentUser.followingIds.includes(userId)) {
+                state.currentUser.followingIds.push(userId);
+              }
+            });
+          } catch (error) {
+            console.error('关注用户失败:', error);
+            throw error;
+          }
         },
-        unfollowUser: (userId: number) => {
-          set((state: AuthState & UserActions) => {
-            if (state.currentUser) {
-              state.currentUser.followingIds = state.currentUser.followingIds.filter((id: number) => id !== userId);
-            }
-          });
+        unfollowUser: async (userId: number) => {
+          try {
+            // 调用取消关注API
+            await apiClient({
+              url: '/follows',
+              method: 'DELETE',
+              data: {
+                followerId: useUserStore.getState().currentUser?.id,
+                followingId: userId
+              }
+            });
+
+            // 更新本地状态
+            set((state) => {
+              if (state.currentUser) {
+                state.currentUser.followingIds = state.currentUser.followingIds.filter(id => id !== userId);
+              }
+            });
+          } catch (error) {
+            console.error('取消关注用户失败:', error);
+            throw error;
+          }
         }
       })),
       {

@@ -9,8 +9,8 @@ export interface Post {
     createdTime: string;//ISO 8601 格式的字符串形如2025-05-08T12:54:03
     viewCount: number;
     likeCount: number;
-    isLiked: boolean;
-    isSaved: boolean;
+    likedList: number[];
+    savedList: number[];
 }
 export interface PostDetail extends Post {
     comments: Comment[];

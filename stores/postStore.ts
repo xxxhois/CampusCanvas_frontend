@@ -3,6 +3,7 @@ import { create } from 'zustand';
 import { devtools } from 'zustand/middleware';
 import { immer } from 'zustand/middleware/immer';
 import { useUserStore } from './userStore';
+import { apiClient } from '@/lib/api-client';
 
 interface Comment {
     id: string;
@@ -27,11 +28,11 @@ interface Comment {
   interface PostActions {
     getPosts: (page?: number) => Promise<void>;
     // getPostDetail: (postId: number) => Promise<PostDetail | undefined>;
-    searchPosts: (params: { keyword?: string; tags?: string[] }) => Promise<void>;
-    createPost: (post: { content: string; images?: string[]; tags?: string[] }) => Promise<void>;
-    deletePost: (postId: number) => void;
-    likePost: (postId: number) => void;
-    unlikePost: (postId: number) => void;
+    // searchPosts: (params: { keyword?: string; tags?: string[] }) => Promise<void>;
+    // createPost: (post: { content: string; images?: string[]; tags?: string[] }) => Promise<void>;
+    // deletePost: (postId: number) => void;
+    // likePost: (postId: number) => void;
+    // unlikePost: (postId: number) => void;
     savePost: (postId: number) => void;//收藏帖子
     unsavePost: (postId: number) => void;//取消收藏
     addComment: (postId: number, content: string) => void;
@@ -55,7 +56,7 @@ interface Comment {
             const res = await fetch(`/api/posts?page=${page}`);
             const data = await res.json();
             set({ posts: data.posts, loading: false });
-          } catch (err) {
+          } catch (err: any) {
             set({ error: err.message, loading: false });
           }
         },
@@ -70,77 +71,50 @@ interface Comment {
         // },
 
   
-        async searchPosts(params) {
-          set({ searchParams: params, loading: true });
-          // 调用搜索API
-          const res = await fetch('/api/posts/search', {
-            method: 'POST',
-            body: JSON.stringify(params)
-          });
-          const data = await res.json();
-          set({ posts: data.posts, loading: false });
-        },
+        // async searchPosts(params) {
+        //   set({ searchParams: params, loading: true });
+        //   // 调用搜索API
+        //   const res = await fetch('/api/posts/search', {
+        //     method: 'POST',
+        //     body: JSON.stringify(params)
+        //   });
+        //   const data = await res.json();
+        //   set({ posts: data.posts, loading: false });
+        // },
   
-        async createPost(post) {
-          const { currentUser } = useUserStore.getState();
-          if (!currentUser) throw new Error('需要登录');
+        // async createPost(post) {
+        //   const { currentUser } = useUserStore.getState();
+        //   if (!currentUser) throw new Error('需要登录');
           
-          const newPost = {
-            ...post,
-            authorId: currentUser.id,
-            createdAt: new Date(),
-            likesCount: 0,
-            savesCount: 0,
-            comments: []
-          };
+        //   const newPost = {
+        //     ...post,
+        //     authorId: currentUser.id,
+        //     createdAt: new Date(),
+        //     likesCount: 0,
+        //     savesCount: 0,
+        //     comments: []
+        //   };
           
-          set(state => {
-            state.posts.unshift(newPost);
-          });
+        //   set(state => {
+        //     state.posts.unshift(newPost);
+        //   });
           
-          // 调用创建帖子API
-          await fetch('/api/posts', {
-            method: 'POST',
-            body: JSON.stringify(newPost)
-          });
-        },
+        //   // 调用创建帖子API
+        //   await fetch('/api/posts', {
+        //     method: 'POST',
+        //     body: JSON.stringify(newPost)
+        //   });
+        // },
   
-        deletePost(postId) {
-          set(state => {
-            state.posts = state.posts.filter(post => post.id !== postId);
-          });
-          // 调用删除API
-          fetch(`/api${postId}`, { method: 'DELETE' });
-        },
+        // deletePost(postId) {
+        //   set(state => {
+        //     state.posts = state.posts.filter(post => post.id !== postId);
+        //   });
+        //   // 调用删除API
+        //   fetch(`/api${postId}`, { method: 'DELETE' });
+        // },
   
-        likePost(postId) {
-          const { currentUser } = useUserStore.getState();
-          if (!currentUser) return;
-  
-          set(state => {
-            const post = state.posts.find(p => p.id === postId);
-            if (post && !post.likes.includes(currentUser.id)) {
-              post.likesCount++;
-              post.likes.push(currentUser.id);
-            }
-          });
-        },
-  
-      // 取消点赞
-      unlikePost(postId) {
-        const { currentUser } = useUserStore.getState();
-        if (!currentUser) return;
 
-        set(state => {
-          const post = state.posts.find(p => p.id === postId);
-          if (post && post.likes.includes(currentUser.id)) {
-            post.likesCount = Math.max(0, post.likesCount - 1);
-            post.likes = post.likes.filter(id => id !== currentUser.id);
-          }
-        });
-        // 可选：调用后端API
-        fetch(`/api/posts/${postId}/unlike`, { method: 'POST' });
-      },
 
       // 收藏帖子
       savePost(postId) {

@@ -11,7 +11,7 @@ export interface User {
   email: string;
   followingIds: number[];
   followerIds: number[];
-  avatar?: string;
+  avatarUrl?: string;
   bio?: string;
   isFollowing?: boolean;
 }

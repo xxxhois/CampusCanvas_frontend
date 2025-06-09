@@ -1,10 +1,9 @@
 import Profile from '@/components/client/profile';
-
 export default async function ProfilePage({
   params,
 }: {
-  params: { userId: string }
+  params: Promise<{ userId: string }>;
 }) {
-  const userId = await Promise.resolve(params.userId);
+  const { userId } = await params;
   return <Profile userId={userId} />;
 }

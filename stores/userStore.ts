@@ -116,11 +116,10 @@ export const useUserStore = create<AuthState & UserActions>()(
         }),
 
         updateProfile: (update: Partial<User>) => {
-          set((state: { currentUser: User | null; }) => {
-            if (state.currentUser) {
-              Object.assign(state.currentUser, update);
-            }
-          });
+          set((state) => ({
+            ...state,
+            currentUser: state.currentUser ? { ...state.currentUser, ...update } : null
+          }));
         },
         followUser: async (userId: number) => {
           try {

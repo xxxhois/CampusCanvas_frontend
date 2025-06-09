@@ -4,6 +4,8 @@ import { getApiBaseUrl } from './config';
 
 // 从localStorage获取token的辅助函数
 const getTokenFromStorage = () => {
+  if (typeof window === 'undefined') return null;
+  
   try {
     const storedState = localStorage.getItem('user-storage');
     if (storedState) {

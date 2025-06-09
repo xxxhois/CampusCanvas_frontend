@@ -28,7 +28,7 @@ export default function Profile({ userId }: { userId: string }) {
   const isOwnProfile = currentUser && currentUser.id.toString() === userId;
 
   useEffect(() => {
-    const fetchUserData = async () => {
+    const fetchUserProfileAndFollowCounts = async () => {
       try {
         // 获取用户基本信息
         const profileData = await apiClient<ApiResponse<UserProfile>>({
@@ -44,6 +44,15 @@ export default function Profile({ userId }: { userId: string }) {
         });
         setFollowCounts(followData.data);
 
+        setIsLoading(false);
+      } catch (error) {
+        console.error('Error fetching user profile and follow counts:', error);
+        setIsLoading(false);
+      }
+    };
+
+    const fetchPostsAndFavorites = async () => {
+      try {
         // 获取用户帖子
         const postsData = await apiClient<ApiResponse<PaginatedResponse<Post>>>({
             url: `/users/${userId}/posts`,
@@ -57,50 +66,19 @@ export default function Profile({ userId }: { userId: string }) {
             method: 'GET'
         });
         setFavoritePosts(favoritesData.data.list);
-
-        // 获取关注列表
-        const followingsData = await apiClient<ApiResponse<PaginatedResponse<UserProfile>>>({
-            url: `/users/${userId}/followings`,
-            method: 'GET'
-        });
-        if(isOwnProfile && currentUser) {
-          useUserStore.setState(state => ({
-            currentUser: {
-              ...state.currentUser!,
-              followingIds: followingsData.data.list.map(user => user.id)
-            }
-          }));
-        }
-
-        // 获取粉丝列表
-        const followersData = await apiClient<ApiResponse<PaginatedResponse<UserProfile>>>({
-            url: `/users/${userId}/followers`,
-            method: 'GET'
-        });
-        if(isOwnProfile && currentUser) {
-          useUserStore.setState(state => ({
-            currentUser: {
-              ...state.currentUser!,
-              followerIds: followersData.data.list.map(user => user.id)
-            }
-          }));
-        }
-
-        setIsLoading(false);
       } catch (error) {
-        console.error('Error fetching user data:', error);
-        setIsLoading(false);
+        console.error('Error fetching posts and favorites:', error);
       }
     };
 
     if (userId) {
-      fetchUserData();
+      fetchUserProfileAndFollowCounts();
+      fetchPostsAndFavorites();
     }
   }, [userId, currentUser?.id]);
 
   const handleEditProfile = () => {
-    setIsEditing(true);
-    // TODO: 实现编辑个人资料的逻辑
+    router.push('/profile/edit');
   };
 
   const handleFollow = async () => {
@@ -167,11 +145,11 @@ export default function Profile({ userId }: { userId: string }) {
               </Button>
             ) : (
               <Button 
-                variant={currentUser?.followingIds.includes(userProfile.id) ? "outline" : "destructive"} 
+                variant={currentUser?.followingIds?.includes(userProfile.id) ? "outline" : "destructive"} 
                 className="rounded-full px-6"
                 onClick={handleFollow}
               >
-                {currentUser?.followingIds.includes(userProfile.id) ? '取消关注' : '关注'}
+                {currentUser?.followingIds?.includes(userProfile.id) ? '取消关注' : '关注'}
               </Button>
             )}
           </div>

@@ -23,7 +23,7 @@ export function PostList() {
     queryFn: async ({ pageParam = 1 }) => {
       const params = new URLSearchParams({
         pageNum: pageParam.toString(),
-        pageSize: '3',
+        pageSize: '5',
         days: '100'
       });
       console.log('params', params.toString())

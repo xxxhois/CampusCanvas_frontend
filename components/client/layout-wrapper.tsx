@@ -9,7 +9,7 @@ export function LayoutWrapper({
   children: React.ReactNode;
 }) {
   const pathname = usePathname();
-  const isAuthPage = pathname === '/login' || pathname === '/register';
+  const isAuthPage = pathname === '/login' || pathname === '/register' || pathname === '/admin' || pathname === '/admin/login';
 
   return (
     <div className="flex min-h-screen">

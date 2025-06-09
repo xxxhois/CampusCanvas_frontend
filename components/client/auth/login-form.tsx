@@ -18,10 +18,9 @@ const formSchema = z.object({
 
 export function LoginForm({ isAdmin = false }: { isAdmin?: boolean }) {
   const { toast } = useToast()
-  const navigate = useRouter()
+  const router = useRouter()
   const searchParams = useSearchParams()
-  const { token } = useUserStore()
-  // const { isUnauthorized, setUnauthorized } = useUserStore()
+  const { login, adminLogin, token } = useUserStore()
   
   useEffect(() => {
     if (!token) {
@@ -44,33 +43,44 @@ export function LoginForm({ isAdmin = false }: { isAdmin?: boolean }) {
     if (urlPassword) {
       form.setValue('password', decodeURIComponent(urlPassword))
     }
-
-    window.history.replaceState(null, '', isAdmin ? '/admin/login' : '/login')
   }, [])
 
   const form = useForm({
     resolver: zodResolver(formSchema),
     defaultValues: { username: "", password: "" }
   })
-  const { login } = useUserStore()
 
   const onSubmit = async (values: z.infer<typeof formSchema>) => {
     try {
-      await login({
-        username: values.username,
-        password: values.password
+      if (isAdmin) {
+        await adminLogin({
+          username: values.username,
+          password: values.password
+        });
+      } else {
+        // 普通用户登录
+        await login({
+          username: values.username,
+          password: values.password
+        });
+      }
+
+      toast({
+        title: "登录成功",
+        description: isAdmin ? "欢迎管理员！" : "欢迎回来！",
+        variant: "default",
+        duration: 1500
       });
-      toast(
-        {
-          title: "登录成功",
-          description: "欢迎回来！",
-          variant: "default",
-          duration: 1500
-        }
-      )
+
       // 登录成功后跳转回原页面或首页
-      const redirectTo = searchParams.get("redirect") || "/";//redirect参数不需要手动删除，下次跳转前重新设置
-      navigate.push(redirectTo);
+      const redirectTo = isAdmin ? "/admin" : "/";
+      console.log('准备跳转到:', redirectTo);
+      try {
+        await router.push(redirectTo);
+        console.log('跳转成功');
+      } catch (error) {
+        console.error('跳转失败:', error);
+      }
     } catch (error) {
       toast({
         title: "登录失败",
@@ -79,7 +89,6 @@ export function LoginForm({ isAdmin = false }: { isAdmin?: boolean }) {
       });
     }
   };
-
 
   return (
     <div className="flex items-center justify-center">

@@ -9,7 +9,7 @@ export const getApiBaseUrl = () => {
       case 'mock':
         return 'http://127.0.0.1:4523/m1/5986883-0-default'
       case 'production':
-        return 'https://api.yourdomain.com'
+        return 'http://100.66.86.59:8080/campus-canvas/api'
       case 'test':
         return 'https://staging-api.yourdomain.com'
       default:
@@ -26,7 +26,7 @@ export const getWsBaseUrl = () => {
         case 'development':
             return 'ws://100.66.86.59:8080/ws'
         case 'production':
-            return 'wss://your-production-domain.com/ws'
+            return 'ws://100.66.86.59:8080/ws'
         default:
             return 'ws://localhost:8080/ws'
     }

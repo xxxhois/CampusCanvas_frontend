@@ -15,6 +15,19 @@ export interface User {
   bio?: string;
   isFollowing?: boolean;
 }
+
+export interface AdminLoginResponse {
+  code: number
+  message: string
+  data: {
+    token: string
+    adminId: number
+    userId: number
+    username: string
+    role: string
+    isActive: boolean
+  }
+}
   
   // 登录请求/响应
 export interface LoginRequest {

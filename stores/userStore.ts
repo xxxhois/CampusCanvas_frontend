@@ -1,5 +1,5 @@
 import { apiClient } from '@/lib/api-client';
-import { LoginRequest, LoginResponse, RegisterRequest, RegisterResponse, User } from '@/types/auth';
+import { AdminLoginResponse, LoginRequest, LoginResponse, RegisterRequest, RegisterResponse, User } from '@/types/auth';
 import { create } from 'zustand';
 import { createJSONStorage, devtools, persist } from 'zustand/middleware';
 import { immer } from 'zustand/middleware/immer';
@@ -8,12 +8,14 @@ import { immer } from 'zustand/middleware/immer';
 interface AuthState {
   token: string | null;
   currentUser: User | null;
+  isAdmin: boolean;
   //isUnauthorized: boolean;
 }
 
 interface UserActions {
   register: (user: { username: string; email: string; password: string; code: string; avatarUrl?: string }) => Promise<RegisterResponse>;
   login: (credentials: LoginRequest) => Promise<boolean>;
+  adminLogin: (credentials: LoginRequest) => Promise<boolean>;
   logout: () => void;
   //setUnauthorized: (value: boolean) => void;
   updateProfile: (update: Partial<User>) => void;
@@ -27,6 +29,7 @@ export const useUserStore = create<AuthState & UserActions>()(
       immer((set, get) => ({
         token: null,
         currentUser: null,
+        isAdmin: false,
         //isUnauthorized: false,
         // setUnauthorized: (value) => set((state) => {
         //   state.isUnauthorized = value;
@@ -84,6 +87,7 @@ export const useUserStore = create<AuthState & UserActions>()(
               // 先设置 token
               set((state) => {
                 state.token = token;
+                state.isAdmin = false;
               });
               
               // 获取用户信息
@@ -110,9 +114,33 @@ export const useUserStore = create<AuthState & UserActions>()(
           }
         },
 
+        adminLogin: async (credentials: LoginRequest) => {
+          try {
+            const response = await apiClient<AdminLoginResponse>({
+              url: '/admin/login',
+              method: 'POST',
+              data: credentials
+            });
+
+            if (response.code === 200) {
+              const { token } = response.data;
+              // 设置 token
+              set((state) => {
+                state.token = token;
+                state.isAdmin = true;
+              });
+              return true;
+            }
+            return false;
+          } catch (error) {
+            throw error;
+          }
+        },
+
         logout: () => set((state) => {
           state.token = null;
           state.currentUser = null;
+          state.isAdmin = false;
         }),
 
         updateProfile: (update: Partial<User>) => {

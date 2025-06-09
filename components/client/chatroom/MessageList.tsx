@@ -43,6 +43,18 @@ export const InfiniteMessageList: React.FC<MessageListProps> = ({ chatRoomId, pa
     initialPageParam: 1,
   });
 
+  // 滚动到底部
+  const scrollToBottom = () => {
+    if (scrollRef.current) {
+      scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
+    }
+  };
+
+  // 监听消息变化，自动滚动到底部
+  useEffect(() => {
+    scrollToBottom();
+  }, [data?.pages]);
+
   // 滚动监听
   useEffect(() => {
     const container = scrollRef.current;

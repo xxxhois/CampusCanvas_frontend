@@ -6,7 +6,9 @@ import { Card } from '@/components/ui/card'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { useToast } from '@/hooks/use-toast'
 import { apiClient } from '@/lib/api-client'
+import { useNotificationStore } from '@/stores/notificationStore'
 import { useUserStore } from '@/stores/userStore'
+import { useWSStore } from '@/stores/wsStore'
 import { ChatRoomDetailResponse, ChatRoomListResponse } from '@/types/chat'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { useParams } from 'next/navigation'
@@ -39,6 +41,8 @@ export default function ChatWindow() {
   const { currentUser } = useUserStore();
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const { ws, isConnected, connect, sendMessage } = useWSStore();
+  const { markAsRead } = useNotificationStore();
 
   // 获取最近活动的聊天室
   useEffect(() => {
@@ -72,6 +76,33 @@ export default function ChatWindow() {
     queryFn: () => fetchChatDetail(chatroomId!),
     enabled: !!chatroomId,
   })
+
+  // 监听WebSocket消息
+  useEffect(() => {
+    if (!chatroomId) return;
+
+    const { ws } = useWSStore.getState();
+    if (!ws) {
+      useWSStore.getState().connect(chatroomId);
+    }
+
+    const handleMessage = (event: MessageEvent) => {
+      try {
+        const data = JSON.parse(event.data);
+        if (data.type === 'group_message') {
+          queryClient.invalidateQueries({ queryKey: ['chat-messages', chatroomId] });
+        }
+      } catch (error) {
+        console.error('处理WebSocket消息失败:', error);
+      }
+    };
+
+    ws?.addEventListener('message', handleMessage);
+    return () => {
+      ws?.removeEventListener('message', handleMessage);
+      useWSStore.getState().disconnect();
+    };
+  }, [chatroomId, queryClient]);
 
   const handleSendMessage = async () => {
     if (!message.trim() || !currentUser?.id || !chatroomId) return;

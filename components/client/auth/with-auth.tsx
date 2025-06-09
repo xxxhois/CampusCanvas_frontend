@@ -11,7 +11,7 @@ export function withAuth<P extends object>(WrappedComponent: React.ComponentType
 
     useEffect(() => {
       if (!token) {
-        router.push('/login')
+        router.push('/admin/login')
       }
     }, [token, router])
 

@@ -19,17 +19,22 @@ export const useWSStore = create<WSStore>((set, get) => ({
 
   connect: (chatRoomId: number) => {
     const { ws, isConnected } = get();
-    console.log('尝试连接WebSocket，当前状态:', { ws: !!ws, isConnected });
+    console.log('尝试连接WebSocket，当前状态:', { 
+      ws: !!ws, 
+      isConnected,
+      readyState: ws?.readyState,
+      chatRoomId 
+    });
     
     // 如果已经连接，不要重复连接
-    if (ws && isConnected) {
+    if (ws && isConnected && ws.readyState === WebSocket.OPEN) {
       console.log('WebSocket已经连接，跳过连接');
       return;
     }
 
     // 如果存在旧的连接，先关闭
     if (ws) {
-      console.log('关闭旧的WebSocket连接');
+      console.log('关闭旧的WebSocket连接，状态:', ws.readyState);
       ws.close();
       set({ ws: null, isConnected: false });
     }
@@ -50,7 +55,10 @@ export const useWSStore = create<WSStore>((set, get) => ({
         const newWs = new WebSocket(wsUrl);
         
         newWs.onopen = () => {
-          console.log('WebSocket连接已建立，状态:', newWs.readyState);
+          console.log('WebSocket连接已建立，状态:', {
+            readyState: newWs.readyState,
+            chatRoomId
+          });
           set({ isConnected: true, ws: newWs });
           retryCount = 0;
         };
@@ -69,7 +77,8 @@ export const useWSStore = create<WSStore>((set, get) => ({
             code: event.code,
             reason: event.reason,
             wasClean: event.wasClean,
-            readyState: newWs.readyState
+            readyState: newWs.readyState,
+            chatRoomId
           });
           set({ ws: null, isConnected: false });
           
@@ -86,7 +95,8 @@ export const useWSStore = create<WSStore>((set, get) => ({
           console.error('WebSocket错误:', {
             error,
             readyState: newWs.readyState,
-            url: wsUrl
+            url: wsUrl,
+            chatRoomId
           });
           set({ isConnected: false });
           newWs.close();
@@ -109,7 +119,7 @@ export const useWSStore = create<WSStore>((set, get) => ({
   disconnect: () => {
     const { ws } = get();
     if (ws) {
-      console.log('主动断开WebSocket连接');
+      console.log('主动断开WebSocket连接，状态:', ws.readyState);
       ws.close();
       set({ ws: null, isConnected: false });
     }

@@ -79,12 +79,21 @@ export default function ChatWindow() {
 
   // 监听WebSocket消息
   useEffect(() => {
-    if (!chatroomId) return;
+    if (!chatroomId || !data?.data) return;
 
-    const { ws } = useWSStore.getState();
-    if (!ws) {
-      useWSStore.getState().connect(chatroomId);
+    // 检查当前用户是否是聊天室成员
+    const isMember = data.data.members.some(member => member.userId === currentUser?.id);
+    if (!isMember) {
+      console.log('当前用户不是聊天室成员，不建立WebSocket连接');
+      return;
     }
+
+    // 先断开之前的连接
+    useWSStore.getState().disconnect();
+
+    // 建立新连接
+    useWSStore.getState().connect(chatroomId);
+    const { ws } = useWSStore.getState();
 
     const handleMessage = (event: MessageEvent) => {
       try {
@@ -98,11 +107,12 @@ export default function ChatWindow() {
     };
 
     ws?.addEventListener('message', handleMessage);
+    
     return () => {
-      ws?.removeEventListener('message', handleMessage);
+      // 确保在组件卸载时断开连接
       useWSStore.getState().disconnect();
     };
-  }, [chatroomId, queryClient]);
+  }, [chatroomId, queryClient, data?.data, currentUser?.id]);
 
   const handleSendMessage = async () => {
     if (!message.trim() || !currentUser?.id || !chatroomId) return;
@@ -132,6 +142,33 @@ export default function ChatWindow() {
     }
   };
 
+  const handleJoinRequest = async () => {
+    if (!chatroomId || !currentUser?.id) return;
+
+    try {
+      await apiClient({
+        url: `/chatrooms/${chatroomId}/join`,
+        method: 'POST',
+        data: {
+          userId: currentUser.id
+        }
+      });
+
+      toast({
+        title: '申请成功'
+      });
+
+      // 刷新聊天室数据
+      queryClient.invalidateQueries({ queryKey: ['chatroom', chatroomId] });
+    } catch (error) {
+      toast({
+        title: '申请失败',
+        description: '请稍后重试',
+        variant: 'destructive'
+      });
+    }
+  };
+
   const handleKeyPress = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
@@ -155,7 +192,40 @@ export default function ChatWindow() {
     return <Card className="flex-1 p-4 text-red-500">加载失败，请重试</Card>
   }
 
-  const chatroom = data.data
+  const chatroom = data.data;
+  const isMember = chatroom.members.some(member => {
+    return member.userId === currentUser?.id;
+  });
+
+  if (!isMember) {
+    return (
+      <Card className="h-screen flex flex-col">
+        {/* Header */}
+        <div className="border-b p-4 flex justify-between items-center">
+          <h2 className="text-xl font-semibold">{chatroom.name}</h2>
+          <MemberSidebar members={chatroom.members} />
+        </div>
+
+        {/* Non-member Content */}
+        <div className="flex-1 flex flex-col items-center justify-center p-4">
+          <div className="text-center space-y-4">
+            <p className="text-lg text-muted-foreground">
+              您还不是该聊天室的成员
+            </p>
+            <p className="text-sm text-muted-foreground">
+              申请加入后即可查看消息和参与讨论
+            </p>
+            <Button 
+              onClick={handleJoinRequest}
+              className="mt-4"
+            >
+              申请加入
+            </Button>
+          </div>
+        </div>
+      </Card>
+    );
+  }
 
   return (
     <Card className="h-screen flex flex-col">

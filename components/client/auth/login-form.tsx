@@ -13,10 +13,10 @@ import * as z from 'zod'
 
 const formSchema = z.object({
   username: z.string().min(1, "用户名不能为空"),
-  password: z.string().min(8, "密码至少8位"),
+  password: z.string().min(3, "密码至少3位"),
 })
 
-export function LoginForm() {
+export function LoginForm({ isAdmin = false }: { isAdmin?: boolean }) {
   const { toast } = useToast()
   const navigate = useRouter()
   const searchParams = useSearchParams()
@@ -45,7 +45,7 @@ export function LoginForm() {
       form.setValue('password', decodeURIComponent(urlPassword))
     }
 
-    window.history.replaceState(null, '', '/login')
+    window.history.replaceState(null, '', isAdmin ? '/admin/login' : '/login')
   }, [])
 
   const form = useForm({

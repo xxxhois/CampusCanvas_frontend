@@ -12,7 +12,7 @@ export function PostCard({ post }: PostCardProps) {
   const router = useRouter()
   const { currentUser } = useUserStore()
 
-  console.log('Post data:', post)
+  // console.log('Post data:', post)
 
   return (
     <div className="bg-white rounded-xl shadow-sm hover:shadow-md transition-shadow duration-200">

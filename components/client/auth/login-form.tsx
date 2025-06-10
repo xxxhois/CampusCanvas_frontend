@@ -68,6 +68,10 @@ export function LoginForm({ isAdmin = false }: { isAdmin?: boolean }) {
         const token = useUserStore.getState().token
         document.cookie = `token=${token}; path=/;`
       }
+      else{
+        document.cookie = 'token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT';
+        console.log('删除cookie')
+      }
       toast({
         title: "登录成功",
         description: isAdmin ? "欢迎管理员！" : "欢迎回来！",

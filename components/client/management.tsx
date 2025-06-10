@@ -99,20 +99,29 @@ export default function Management() {
   // 处理用户封禁
   const handleBanUser = async (userId: number) => {
     try {
-      await apiClient({
-        url: `/admin/users/${userId}/ban`,
-        method: 'POST'
+      const user = users?.find(u => u.id === userId);
+      if (!user) return;
+
+      const response = await apiClient<{ code: number; message: string }>({
+        url: `/users/${userId}/status`,
+        method: 'PUT',
+        data: {
+          status: user.status === 'active' ? 'banned' : 'active'
+        }
       });
-      toast({
-        title: '操作成功',
-        description: '用户已被封禁'
-      });
-      queryClient.invalidateQueries({ queryKey: ['users'] });
+
+      if (response.code === 200) {
+        toast({
+          title: user.status === 'active' ? '封禁成功' : '解禁成功',
+          description: user.status === 'active' ? '用户已被封禁' : '用户已被解禁',
+        });
+        queryClient.invalidateQueries({ queryKey: ['users'] });
+      }
     } catch (error) {
       toast({
         title: '操作失败',
         description: '请稍后重试',
-        variant: 'destructive'
+        variant: 'destructive',
       });
     }
   };
@@ -253,15 +262,13 @@ export default function Management() {
                         </td>
                         <td className="p-4 align-middle">{new Date(user.createdAt).toLocaleDateString()}</td>
                         <td className="p-4 align-middle">
-                          {user.status === 'active' && (
-                            <Button
-                              variant="destructive"
-                              size="sm"
-                              onClick={() => handleBanUser(user.id)}
-                            >
-                              封禁
-                            </Button>
-                          )}
+                          <Button
+                            variant={user.status === 'active' ? "destructive" : "default"}
+                            size="sm"
+                            onClick={() => handleBanUser(user.id)}
+                          >
+                            {user.status === 'active' ? '封禁' : '解禁'}
+                          </Button>
                         </td>
                       </tr>
                     ))}

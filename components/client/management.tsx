@@ -11,11 +11,12 @@ import { useToast } from '@/hooks/use-toast'
 import { apiClient } from '@/lib/api-client'
 import { cn } from '@/lib/utils'
 import { useUserStore } from '@/stores/userStore'
+import { ChatRoomListResponse } from '@/types/chat'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { format } from 'date-fns'
 import { CalendarIcon } from 'lucide-react'
 import { useRouter } from 'next/navigation'
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import { CartesianGrid, Legend, Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts'
 
 // 类型定义
@@ -34,16 +35,20 @@ interface User {
   createdAt: string
 }
 
-interface ChatRoom {
-  id: number
-  name: string
-  status: 'pending' | 'approved' | 'rejected'
-  memberCount: number
-  createdAt: string
-}
+// interface ChatRoom {
+//   id: number
+//   name: string
+//   status: 'pending' | 'approved' | 'rejected'
+//   memberCount: number
+//   createdAt: string
+// }
 
 // 数据获取函数
 const fetchDashboardData = async (startDate: string, endDate: string): Promise<DashboardData> => {
+  console.log('Dashboard请求头:', {
+    url: `/overview?startDate=${startDate}&endDate=${endDate}`,
+    token: useUserStore.getState().token
+  });
   const res = await apiClient<{ data: DashboardData }>({
     url: `/overview?startDate=${startDate}&endDate=${endDate}`,
   });
@@ -58,12 +63,16 @@ const fetchDashboardData = async (startDate: string, endDate: string): Promise<D
 //   return res.data;
 // };
 
-const fetchChatRooms = async (approved: boolean): Promise<ChatRoom[]> => {
-  const res = await apiClient<{ data: ChatRoom[] }>({
+const fetchChatRooms = async (approved: boolean): Promise<ChatRoomListResponse> => {
+  console.log('聊天室请求头:', {
+    url: `/chatrooms?approved=${approved}`,
+    token: useUserStore.getState().token
+  });
+  const res = await apiClient<ChatRoomListResponse>({
     url: `/chatrooms?approved=${approved}`,
     method: 'GET'
   });
-  return res.data;
+  return res;
 };
 
 export default function Management() {
@@ -78,13 +87,6 @@ export default function Management() {
   const [startDate, setStartDate] = useState<Date>(new Date(2024, 5, 9))
   const [endDate, setEndDate] = useState<Date>(new Date(2025, 5, 9))
 
-  // 检查权限
-  useEffect(() => {
-    if (!currentUser) {
-      router.push('/login');
-      return;
-    }
-  }, [currentUser, router]);
 
   // 获取数据
   const { data: dashboardData, refetch: refetchDashboard } = useQuery({
@@ -99,12 +101,14 @@ export default function Management() {
 
   const { data: approvedRooms } = useQuery({
     queryKey: ['chatrooms', 'approved'],
-    queryFn: () => fetchChatRooms(true)
+    queryFn: () => fetchChatRooms(true).then(res => res.data.rooms),
+    enabled: showApproved
   });
 
   const { data: pendingRooms } = useQuery({
     queryKey: ['chatrooms', 'pending'],
-    queryFn: () => fetchChatRooms(false)
+    queryFn: () => fetchChatRooms(false).then(res => res.data.rooms),
+    enabled: !showApproved
   });
 
   // 处理用户封禁
@@ -138,16 +142,24 @@ export default function Management() {
   // };
 
   // 处理聊天室审核
-  const handleApproveChatRoom = async (chatRoomId: number) => {
+  const handleApproveChatRoom = async (chatRoomId: number): Promise<void> => {
     try {
+      console.log('批准聊天室请求头:', {
+        url: `/chatrooms/${chatRoomId}/approve`,
+        token: useUserStore.getState().token
+      });
       await apiClient({
         url: `/chatrooms/${chatRoomId}/approve`,
-        method: 'POST'
+        method: 'PUT',
+        data: {
+          approved: true
+        }
       });
       toast({
         title: '操作成功',
         description: '聊天室已通过审核'
       });
+      // 同时刷新两个列表
       queryClient.invalidateQueries({ queryKey: ['chatrooms'] });
     } catch (error) {
       toast({
@@ -263,7 +275,10 @@ export default function Management() {
             <CardContent>
               <div className="h-[400px]">
                 <ResponsiveContainer width="100%" height="100%">
-                  <LineChart data={dashboardData?.dailyUserCounts}>
+                  <LineChart data={dashboardData?.dailyUserCounts.map((item, index) => ({
+                    ...item,
+                    postCount: dashboardData?.dailyPostCounts[index]?.count || 0
+                  }))}>
                     <CartesianGrid strokeDasharray="3 3" />
                     <XAxis 
                       dataKey="date" 
@@ -370,18 +385,22 @@ export default function Management() {
               onChange={(e) => setChatRoomSearch(e.target.value)}
               className="max-w-sm"
             />
-            <Button
-              variant={showApproved ? "default" : "outline"}
-              onClick={() => setShowApproved(false)}
-            >
-              待审核
-            </Button>
-            <Button
-              variant={showApproved ? "outline" : "default"}
-              onClick={() => setShowApproved(true)}
-            >
-              已审核
-            </Button>
+            <div className="flex rounded-md shadow-sm">
+              <Button
+                variant={!showApproved ? "default" : "outline"}
+                onClick={() => setShowApproved(false)}
+                className="rounded-r-none"
+              >
+                待审核
+              </Button>
+              <Button
+                variant={showApproved ? "default" : "outline"}
+                onClick={() => setShowApproved(true)}
+                className="rounded-l-none"
+              >
+                已审核
+              </Button>
+            </div>
           </div>
 
           <Card>
@@ -400,10 +419,12 @@ export default function Management() {
                     {filteredChatRooms?.map((room) => (
                       <tr key={room.id} className="border-b transition-colors hover:bg-muted/50 data-[state=selected]:bg-muted">
                         <td className="p-4 align-middle">{room.name}</td>
-                        <td className="p-4 align-middle">{room.memberCount}</td>
+                        <td className="p-4 align-middle">{room.maxMembers}</td>
                         <td className="p-4 align-middle">{new Date(room.createdAt).toLocaleDateString()}</td>
                         <td className="p-4 align-middle">
-                          {!showApproved && (
+                          {showApproved ? (
+                            <span className="text-green-600">已通过</span>
+                          ) : (
                             <Button
                               variant="default"
                               size="sm"

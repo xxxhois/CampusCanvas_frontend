@@ -89,25 +89,22 @@ export async function apiClient<T>(config: RequestConfig): Promise<T> {
       body: config.data ? JSON.stringify(config.data) : undefined,
     });
 
+    console.log('原始请求状态码:', response.status);
+
     if (config.responseHandler?.onResponse) {
       return await config.responseHandler.onResponse(response);
-    }
-
-    // 先检查响应状态
-    if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
     }
 
     // 尝试解析响应体
     const data = await response.json();
     console.log('API Response:', data);
 
-    // 检查业务状态码
-    if (data.code && data.code !== 200) {
+    // 如果原始请求状态码不是200或业务状态码不是200，则视为失败
+    if (response.status !== 200 || (data.code && data.code !== 200)) {
+      console.log('状态码:', response.status);
       if (data.code === 401) {
         useUserStore.getState().logout();
         window.location.href = '/login';
-        //return data;
       }
       throw new Error(data.message || '请求响应失败');
     }

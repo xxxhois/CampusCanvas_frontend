@@ -69,10 +69,10 @@ export function LoginForm({ isAdmin = false }: { isAdmin?: boolean }) {
         document.cookie = `token=${token}; path=/;`
       }
       else{
-        //document.cookie = 'token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT';
-        //console.log('删除cookie')
-        const token = useUserStore.getState().token
-        document.cookie = `token=${token}; path=/;`
+        document.cookie = 'token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT';
+        console.log('删除cookie')
+        // const token = useUserStore.getState().token
+        // document.cookie = `token=${token}; path=/;`
       }
       toast({
         title: "登录成功",

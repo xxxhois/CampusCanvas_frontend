@@ -1,4 +1,4 @@
-import { usePostStore } from "@/stores/postStore"
+//import { usePostStore } from "@/stores/postStore"
 import { useUserStore } from "@/stores/userStore"
 import { Post } from "@/types/post"
 import Image from "next/image"

@@ -1,7 +1,7 @@
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { apiClient } from '@/lib/api-client';
-import { usePostStore } from '@/stores/postStore';
+//import { usePostStore } from '@/stores/postStore';
 import { useUserStore } from '@/stores/userStore';
 import type { Comment, PostDetail, Tag } from '@/types/post';
 import { useQueries } from '@tanstack/react-query';
@@ -16,7 +16,7 @@ export function PostDetail({ postId }: { postId: number }) {
   const [commentContent, setCommentContent] = useState('');
   const [isFullscreen, setIsFullscreen] = useState(false);
   const { currentUser } = useUserStore();
-  const postStore = usePostStore();
+  //const postStore = usePostStore();
     const results = useQueries({
     queries: [
       {

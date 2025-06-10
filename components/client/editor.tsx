@@ -6,13 +6,27 @@ import { Input } from "@/components/ui/input"
 import { useToast } from "@/hooks/use-toast"
 import { apiClient } from "@/lib/api-client"
 import { useUserStore } from "@/stores/userStore"
-import { Image as ImageIcon, Loader2, X } from "lucide-react"
+import { Image as ImageIcon, Loader2, Wand2, X } from "lucide-react"
 import { useRouter } from "next/navigation"
 import { useRef, useState } from 'react'
 
 interface Tag {
   id: number;
   name: string;
+}
+
+interface AutoCompleteResponse {
+  model: string;
+  created_at: string;
+  response: string;
+  done: boolean;
+  context: number[];
+  total_duration: number;
+  load_duration: number;
+  prompt_eval_count: number;
+  prompt_eval_duration: number;
+  eval_count: number;
+  eval_duration: number;
 }
 
 export function Editor() {
@@ -23,6 +37,7 @@ export function Editor() {
   const [images, setImages] = useState<File[]>([])
   const [imageUrls, setImageUrls] = useState<string[]>([])
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const [isAutoCompleting, setIsAutoCompleting] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
   const { toast } = useToast()
   const router = useRouter()
@@ -130,6 +145,57 @@ export function Editor() {
     }
   }
 
+  const handleAutoComplete = async () => {
+    if (!title.trim() && !content.trim()) {
+      toast({
+        title: "提示",
+        description: "请先输入标题或内容",
+        variant: "destructive",
+      })
+      return
+    }
+
+    setIsAutoCompleting(true)
+    try {
+      const response = await fetch('http://100.66.86.59:11434/api/generate', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          model: "qwen3:8b",
+          prompt: `根据当前内容补全可能的博文${title}+${content}，尽量简短，不要思考`,
+          stream: false
+        })
+      })
+
+      if (!response.ok) {
+        throw new Error('自动补全请求失败')
+      }
+
+      const data: AutoCompleteResponse = await response.json()
+      
+      if (data.response) {
+        // 删除 <think> 标记及其内容
+        const cleanedResponse = data.response.replace(/<think>[\s\S]*?<\/think>\n\n/, '')
+        setContent(prev => prev + '\n' + cleanedResponse)
+        toast({
+          title: "补全成功",
+          description: "内容已自动补全",
+        })
+      }
+    } catch (error) {
+      console.error('自动补全失败:', error)
+      toast({
+        title: "补全失败",
+        description: error instanceof Error ? error.message : "请稍后重试",
+        variant: "destructive",
+      })
+    } finally {
+      setIsAutoCompleting(false)
+    }
+  }
+
   return (
     <Card className="w-full max-w-2xl mx-auto p-6 space-y-6">
       <Input
@@ -149,47 +215,63 @@ export function Editor() {
         />
       </div>
 
-      {/* 图片上传区域 */}
-      <div className="space-y-4">
-        <div className="flex items-center gap-4">
-          <Button
-            variant="outline"
-            onClick={() => fileInputRef.current?.click()}
-            className="flex items-center gap-2"
-          >
-            <ImageIcon className="h-4 w-4" />
-            添加图片
-          </Button>
-          <input
-            type="file"
-            ref={fileInputRef}
-            onChange={handleImageUpload}
-            accept="image/*"
-            multiple
-            className="hidden"
-          />
-        </div>
+      {/* 工具栏 */}
+      <div className="flex items-center gap-4">
+        <Button
+          variant="outline"
+          onClick={() => fileInputRef.current?.click()}
+          className="flex items-center gap-2"
+        >
+          <ImageIcon className="h-4 w-4" />
+          添加图片
+        </Button>
+        <Button
+          variant="outline"
+          onClick={handleAutoComplete}
+          disabled={isAutoCompleting}
+          className="flex items-center gap-2"
+        >
+          {isAutoCompleting ? (
+            <>
+              <Loader2 className="h-4 w-4 animate-spin" />
+              补全中...
+            </>
+          ) : (
+            <>
+              <Wand2 className="h-4 w-4" />
+              自动补全
+            </>
+          )}
+        </Button>
+        <input
+          type="file"
+          ref={fileInputRef}
+          onChange={handleImageUpload}
+          accept="image/*"
+          multiple
+          className="hidden"
+        />
+      </div>
 
-        {/* 图片预览 */}
-        <div className="grid grid-cols-3 gap-4">
-          {imageUrls.map((url, index) => (
-            <div key={index} className="relative aspect-square">
-              <img
-                src={url}
-                alt={`预览图 ${index + 1}`}
-                className="w-full h-full object-cover rounded-lg"
-              />
-              <Button
-                variant="ghost"
-                size="icon"
-                className="absolute top-2 right-2 h-6 w-6 bg-black/50 hover:bg-black/70"
-                onClick={() => removeImage(index)}
-              >
-                <X className="h-4 w-4 text-white" />
-              </Button>
-            </div>
-          ))}
-        </div>
+      {/* 图片预览 */}
+      <div className="grid grid-cols-3 gap-4">
+        {imageUrls.map((url, index) => (
+          <div key={index} className="relative aspect-square">
+            <img
+              src={url}
+              alt={`预览图 ${index + 1}`}
+              className="w-full h-full object-cover rounded-lg"
+            />
+            <Button
+              variant="ghost"
+              size="icon"
+              className="absolute top-2 right-2 h-6 w-6 bg-black/50 hover:bg-black/70"
+              onClick={() => removeImage(index)}
+            >
+              <X className="h-4 w-4 text-white" />
+            </Button>
+          </div>
+        ))}
       </div>
 
       {/* 标签区域 */}

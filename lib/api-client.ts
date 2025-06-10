@@ -54,7 +54,7 @@ export async function apiClient<T>(config: RequestConfig): Promise<T> {
   // 处理路径格式
   const path = config.url.startsWith('/') ? config.url : `/${config.url}`;
   const url = `${baseUrl}${path}`;
-  console.log('API URL:', url);
+  // console.log('API URL:', url);
 
   // 获取token
   const token = getToken();
@@ -89,7 +89,7 @@ export async function apiClient<T>(config: RequestConfig): Promise<T> {
       body: config.data ? JSON.stringify(config.data) : undefined,
     });
 
-    console.log('原始请求状态码:', response.status);
+    // console.log('原始请求状态码:', response.status);
 
     if (config.responseHandler?.onResponse) {
       return await config.responseHandler.onResponse(response);
@@ -97,7 +97,7 @@ export async function apiClient<T>(config: RequestConfig): Promise<T> {
 
     // 尝试解析响应体
     const data = await response.json();
-    console.log('API Response:', data);
+    // console.log('API Response:', data);
 
     // 如果原始请求状态码不是200或业务状态码不是200，则视为失败
     if (response.status !== 200 || (data.code && data.code !== 200)) {

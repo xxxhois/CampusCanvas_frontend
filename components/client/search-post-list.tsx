@@ -11,12 +11,47 @@ import { useInView } from 'react-intersection-observer'
 
 interface SearchPostProps {
   keyword: string;
+  searchType: 'keyword' | 'user';
 }
 
-export function SearchPostList({ keyword }: SearchPostProps) {
+interface UserSearchResponse {
+  code: number;
+  message: string;
+  data: Array<{
+    id: number;
+    username: string;
+    avatarUrl: string;
+  }>;
+}
+
+export function SearchPostList({ keyword, searchType }: SearchPostProps) {
   const { ref, inView } = useInView()
   const [selectedPostId, setSelectedPostId] = useState<number | null>(null)
+  const [userIds, setUserIds] = useState<number[]>([])
   
+  // 用户搜索查询
+  const { data: userSearchData } = useInfiniteQuery({
+    queryKey: ['users', 'search', keyword],
+    queryFn: async () => {
+      const response = await apiClient<UserSearchResponse>({
+        url: `/users/search?username=${encodeURIComponent(keyword)}`,
+        method: 'GET'
+      });
+      return response;
+    },
+    getNextPageParam: () => undefined, // 用户搜索不需要分页
+    initialPageParam: 1,
+    enabled: searchType === 'user' && !!keyword
+  });
+
+  // 当用户搜索结果更新时，更新用户ID列表
+  useEffect(() => {
+    if (userSearchData?.pages[0]?.data) {
+      setUserIds(userSearchData.pages[0].data.map(user => user.id));
+    }
+  }, [userSearchData]);
+
+  // 帖子搜索查询
   const {
     data,
     fetchNextPage,
@@ -24,28 +59,55 @@ export function SearchPostList({ keyword }: SearchPostProps) {
     isFetchingNextPage,
     isLoading
   } = useInfiniteQuery({
-    queryKey: ['posts', 'search', keyword],
+    queryKey: ['posts', searchType, keyword, userIds],
     queryFn: async ({ pageParam = 1 }) => {
-      const params = new URLSearchParams({
-        keyword,
-        pageNum: pageParam.toString(),
-        pageSize: '5'
-      });
-      console.log('搜索参数:', params.toString())
-      const response = await apiClient<PostResponse>({
-        url: `/posts?${params.toString()}`,
-        method: 'GET'
-      });
-
-      return response;
+      if (searchType === 'keyword') {
+        const params = new URLSearchParams({
+          keyword,
+          pageNum: pageParam.toString(),
+          pageSize: '5'
+        });
+        console.log('关键词搜索参数:', params.toString())
+        const response = await apiClient<PostResponse>({
+          url: `/posts?${params.toString()}`,
+          method: 'GET'
+        });
+        return response;
+      } else {
+        // 用户搜索模式
+        const userId = userIds[pageParam - 1];
+        if (!userId) {
+          return {
+            data: {
+              list: [],
+              hasNextPage: false,
+              nextPage: undefined
+            }
+          };
+        }
+        console.log('用户帖子搜索参数:', { userId, pageNum: pageParam })
+        const response = await apiClient<PostResponse>({
+          url: `/users/${userId}/posts`,
+          method: 'GET'
+        });
+        return response;
+      }
     },
-    getNextPageParam: (lastPage) => lastPage.data.hasNextPage ? lastPage.data.nextPage : undefined,
+    getNextPageParam: (lastPage, allPages) => {
+      if (searchType === 'keyword') {
+        return lastPage.data.hasNextPage ? lastPage.data.nextPage : undefined;
+      } else {
+        // 用户搜索模式下，检查是否还有更多用户
+        const currentUserIndex = allPages.length;
+        return currentUserIndex < userIds.length ? currentUserIndex + 1 : undefined;
+      }
+    },
     initialPageParam: 1,
     // 设置缓存时间
     staleTime: 5 * 60 * 1000, // 5分钟
     // 设置缓存数量
     gcTime: 30 * 60 * 1000, // 30分钟
-    enabled: !!keyword // 只有当有搜索关键词时才启用查询
+    enabled: !!keyword && (searchType === 'keyword' || userIds.length > 0)
   })
 
   useEffect(() => {

@@ -12,6 +12,7 @@ import { apiClient } from '@/lib/api-client'
 import { cn } from '@/lib/utils'
 import { useUserStore } from '@/stores/userStore'
 import { ChatRoomListResponse } from '@/types/chat'
+import { ApiResponse } from '@/types/user-profile'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { format } from 'date-fns'
 import { CalendarIcon } from 'lucide-react'
@@ -27,12 +28,16 @@ interface DashboardData {
   dailyPostCounts: Array<{ date: string; count: number }>
 }
 
-interface User {
+interface UserManagement {
   id: number
   username: string
-  email: string
-  status: 'active' | 'banned'
-  createdAt: string
+  status: 'ACTIVE' | 'DISABLED'
+  isBanned:boolean
+}
+
+interface QueryParams {
+  status?: string;
+  search?: string;
 }
 
 // interface ChatRoom {
@@ -55,13 +60,13 @@ const fetchDashboardData = async (startDate: string, endDate: string): Promise<D
   return res.data;
 };
 
-// const fetchUsers = async (): Promise<User[]> => {
-//   const res = await apiClient<{ data: User[] }>({
-//     url: '/admin/users',
-//     method: 'GET'
-//   });
-//   return res.data;
-// };
+const fetchUsers = async (): Promise<ApiResponse<UserManagement[]>> => {
+  const res = await apiClient<ApiResponse<UserManagement[]>>({
+    url: '/users/all',
+    method: 'GET'
+  });
+  return res;
+};
 
 const fetchChatRooms = async (approved: boolean): Promise<ChatRoomListResponse> => {
   console.log('聊天室请求头:', {
@@ -81,7 +86,8 @@ export default function Management() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [userSearch, setUserSearch] = useState('');
-  const [userStatus, setUserStatus] = useState<string>('all');
+  const [statusFilter, setStatusFilter] = useState<string>('all');
+  const [queryParams, setQueryParams] = useState<QueryParams>({});
   const [chatRoomSearch, setChatRoomSearch] = useState('');
   const [showApproved, setShowApproved] = useState(false);
   const [startDate, setStartDate] = useState<Date>(new Date(2024, 5, 9))
@@ -94,10 +100,10 @@ export default function Management() {
     queryFn: () => fetchDashboardData(format(startDate, 'yyyy-MM-dd'), format(endDate, 'yyyy-MM-dd'))
   });
 
-  // const { data: users } = useQuery({
-  //   queryKey: ['users'],
-  //   queryFn: fetchUsers
-  // });
+  const { data: users } = useQuery({
+    queryKey: ['users'],
+    queryFn: () => fetchUsers().then(res => res.data)
+  });
 
   const { data: approvedRooms } = useQuery({
     queryKey: ['chatrooms', 'approved'],
@@ -111,27 +117,38 @@ export default function Management() {
     enabled: !showApproved
   });
 
-  // 处理用户封禁
-  // const handleBanUser = async (userId: number) => {
+  //处理用户封禁
+  const handleBanUser = async (userId: number) => {
+    try {
+      const user = users?.find(u => u.id === userId);
+      if (!user) return;
+
+      const response = await apiClient<{ code: number; message: string }>({
+        url: user.status === 'ACTIVE' ? `/users/${userId}/ban` : `/users/${userId}/unban`,
+        method: 'PUT',
+      });
+
+      if (response.code === 200) {
+        toast({
+          title: user.status === 'ACTIVE' ? '封禁成功' : '解禁成功',
+          description: user.status === 'ACTIVE' ? '用户已被封禁' : '用户已被解禁',
+        });
+        queryClient.invalidateQueries({ queryKey: ['users'] });
+      }
+    } catch (error) {
+      toast({
+        title: '操作失败',
+        description: '请稍后重试',
+        variant: 'destructive',
+      });
+    }
+  };
+  // const handleUnbanUser = async (userId: number) => {
   //   try {
-  //     const user = users?.find(u => u.id === userId);
-  //     if (!user) return;
-
   //     const response = await apiClient<{ code: number; message: string }>({
-  //       url: `/users/${userId}/status`,
+  //       url: `/users/${userId}/unban`,
   //       method: 'PUT',
-  //       data: {
-  //         status: user.status === 'active' ? 'banned' : 'active'
-  //       }
   //     });
-
-  //     if (response.code === 200) {
-  //       toast({
-  //         title: user.status === 'active' ? '封禁成功' : '解禁成功',
-  //         description: user.status === 'active' ? '用户已被封禁' : '用户已被解禁',
-  //       });
-  //       queryClient.invalidateQueries({ queryKey: ['users'] });
-  //     }
   //   } catch (error) {
   //     toast({
   //       title: '操作失败',
@@ -139,7 +156,7 @@ export default function Management() {
   //       variant: 'destructive',
   //     });
   //   }
-  // };
+  // }
 
   // 处理聊天室审核
   const handleApproveChatRoom = async (chatRoomId: number): Promise<void> => {
@@ -170,18 +187,32 @@ export default function Management() {
     }
   };
 
-  // 过滤用户列表
-  // const filteredUsers = users?.filter(user => {
-  //   const matchesSearch = user.username.toLowerCase().includes(userSearch.toLowerCase()) ||
-  //                        user.email.toLowerCase().includes(userSearch.toLowerCase());
-  //   const matchesStatus = userStatus === 'all' || user.status === userStatus;
-  //   return matchesSearch && matchesStatus;
-  // });
+  //过滤用户列表
+  const filteredUsers = users?.filter(user => {
+    const matchesSearch = user.username.toLowerCase().includes(userSearch.toLowerCase());
+    const matchesStatus = statusFilter === 'all' || 
+      (statusFilter === 'active' && user.status === 'ACTIVE') ||
+      (statusFilter === 'banned' && user.status === 'DISABLED');
+    return matchesSearch && matchesStatus;
+  });
 
   // 过滤聊天室列表
   const filteredChatRooms = (showApproved ? approvedRooms ?? [] : pendingRooms ?? []).filter(room => {
     return room.name.toLowerCase().includes(chatRoomSearch.toLowerCase());
   });
+
+  const handleStatusFilter = (value: string) => {
+    setStatusFilter(value)
+    // 将筛选值映射到后端状态
+    const statusMap = {
+      'active': 'ACTIVE',
+      'banned': 'DISABLED'
+    }
+    setQueryParams(prev => ({
+      ...prev,
+      status: statusMap[value as keyof typeof statusMap] || undefined
+    }))
+  }
 
   return (
     <div className="container mx-auto p-6">
@@ -320,12 +351,15 @@ export default function Management() {
               onChange={(e) => setUserSearch(e.target.value)}
               className="max-w-sm"
             />
-            <Select value={userStatus} onValueChange={setUserStatus}>
+            <Select
+              value={statusFilter}
+              onValueChange={setStatusFilter}
+            >
               <SelectTrigger className="w-[180px]">
                 <SelectValue placeholder="选择状态" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">全部状态</SelectItem>
+                <SelectItem value="all">全部</SelectItem>
                 <SelectItem value="active">正常</SelectItem>
                 <SelectItem value="banned">已封禁</SelectItem>
               </SelectContent>
@@ -339,37 +373,33 @@ export default function Management() {
                   <thead className="[&_tr]:border-b">
                     <tr className="border-b transition-colors hover:bg-muted/50 data-[state=selected]:bg-muted">
                       <th className="h-12 px-4 text-left align-middle font-medium">用户名</th>
-                      <th className="h-12 px-4 text-left align-middle font-medium">邮箱</th>
                       <th className="h-12 px-4 text-left align-middle font-medium">状态</th>
-                      <th className="h-12 px-4 text-left align-middle font-medium">注册时间</th>
                       <th className="h-12 px-4 text-left align-middle font-medium">操作</th>
                     </tr>
                   </thead>
-                  {/* <tbody className="[&_tr:last-child]:border-0">
-                    {filteredUsers?.map((user) => (
+                  <tbody className="[&_tr:last-child]:border-0">
+                    {filteredUsers?.map((user: UserManagement) => (
                       <tr key={user.id} className="border-b transition-colors hover:bg-muted/50 data-[state=selected]:bg-muted">
                         <td className="p-4 align-middle">{user.username}</td>
-                        <td className="p-4 align-middle">{user.email}</td>
                         <td className="p-4 align-middle">
                           <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${
-                            user.status === 'active' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
+                            user.status === 'ACTIVE' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
                           }`}>
-                            {user.status === 'active' ? '正常' : '已封禁'}
+                            {user.status === 'ACTIVE' ? '正常' : '已封禁'}
                           </span>
                         </td>
-                        <td className="p-4 align-middle">{new Date(user.createdAt).toLocaleDateString()}</td>
                         <td className="p-4 align-middle">
                           <Button
-                            variant={user.status === 'active' ? "destructive" : "default"}
+                            variant={user.status === 'ACTIVE' ? "destructive" : "default"}
                             size="sm"
                             onClick={() => handleBanUser(user.id)}
                           >
-                            {user.status === 'active' ? '封禁' : '解禁'}
+                            {user.status === 'ACTIVE' ? '封禁' : '解禁'}
                           </Button>
                         </td>
                       </tr>
                     ))}
-                  </tbody> */}
+                  </tbody>
                 </table>
               </div>
             </CardContent>
